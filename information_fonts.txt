@@ -1,0 +1,16 @@
+These are the fonts that the K-NN was trained with.
+
+cabrili
+Arial
+Times New Roman
+Verdana
+Lucida Console Semi-Condensed
+Courier New
+Georgia
+Palatino Linotype
+Bookman  Old Style Light
+Tahoma
+Trebuchet MS
+MS Gothic
+Impact Condensed
+Comic Sans MS
