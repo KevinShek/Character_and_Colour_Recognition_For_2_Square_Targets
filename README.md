@@ -6,11 +6,11 @@ This repository contains the scripts for the following tasks: character and colo
 <img src="Test_Images/L_georgia_fuchsia.png" alt="L" width="100">
 
 Within this file majority of the controls could be changed within the file called config.py which contains operations such as: 
-switching between which K-NN and Tesseract or using RGB or HSV. 
-Visual of the important stages you that wish to enable and see. 
-Testing the system either by video or an image.
-Testing the system for specific operation such as character or colour recognition.
-It also contains the settings for what device you are using the scripts for either for a raspberry pi or PC.
+<li>Switching between which K-NN and Tesseract or using RGB or HSV. </li>
+<li>Visual of the important stages you that wish to enable and see. </li>
+<li>Testing the system either by video or an image.</li>
+<li>Testing the system for specific operation such as character or colour recognition.</li>
+<li>It also contains the settings for what device you are using the scripts for either for a raspberry pi or PC.</li>
 
 However, if you wish to fine tune the scripts, they are seperated to their task that they are focused on. You can find the target detection inside the Main.py.
 
@@ -20,13 +20,13 @@ To run the script type ```python -m Main.py```
 - It is only able to detect the first square target within the image.
 
 # Dependency
--opencv-python
--numpy
--webcolors
--pytesseract
+<li>opencv-python</li>
+<li>numpy</li>
+<li>webcolors</li>
+<li>pytesseract</li>
 
 if using on the raspberry pi, you need:
--picamera
+<li>picamera</li>
 
 
 
