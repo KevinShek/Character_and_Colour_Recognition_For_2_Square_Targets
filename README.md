@@ -3,7 +3,7 @@ The motavation for this project was aimed to tackle the competition that was set
 
 This repository contains the scripts for the following tasks: character and colour recognition and also target detection. The target this script is tailored for is a square target that contains another square which contains a colour and an alphanumeric character that is white. as shown below:
 
-
+![](Test_Images/L_georgia_fuchsia.png)
 
 Within this file majority of the controls could be changed within the file called config.py which contains operations such as: 
 switching between which K-NN and Tesseract or using RGB or HSV. 
