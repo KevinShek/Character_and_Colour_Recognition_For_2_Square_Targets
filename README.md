@@ -17,7 +17,7 @@ However, if you wish to fine tune the scripts, they are seperated to their task 
 To run the script type ```python -m Main.py```
 
 # Issue
-- It is only able to detect the first square target within the image.
+- It is only able to detect the first square target within the frame.
 
 # Dependency
 <li>opencv-python</li>
