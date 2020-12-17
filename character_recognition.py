@@ -1,14 +1,9 @@
-import time
-from math import *
+import math
 import cv2
 import numpy as np
-import imutils.video
 from collections import Counter
-import webcolors
 import operator
-import csv
 import os
-import threading
 import pytesseract
 from config import Settings
 

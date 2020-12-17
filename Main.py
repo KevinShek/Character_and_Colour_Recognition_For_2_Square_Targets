@@ -1,15 +1,8 @@
 import time
-from math import *
 import cv2
 import numpy as np
-import imutils.video
-from collections import Counter
-import webcolors
-import operator
 import csv
 import os
-import threading
-import GPS
 import colour_recognition as colour_recognition
 import character_recognition as character_recognition
 from config import Settings
@@ -57,22 +50,6 @@ def solution(counter, marker, distance):
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
                 filewriter.writerow([str(marker), 0, 0, 0])
 
-    if Settings.GPS and Settings.air == 1:
-        # Get middle position within lists outputted by detection function
-        middle = int(len(positions) / 2)
-
-        print(
-            GPS.GPS(centres[middle], headings[middle], positions[middle][0], positions[middle][1], positions[middle][2],
-                    height_of_target[middle]) + " latitude and longitude of", marker)
-
-    elif Settings.GPS and Settings.air != 1:
-        # Get middle position within lists outputted by detection function
-        middle = int(len(positions) / 2)
-
-        print(
-            GPS.GPS(centres[middle], headings[middle], positions[middle][0], positions[middle][1], positions[middle][2],
-                    height_of_target[middle]) + " latitude, longitude and altitidue of", marker)
-
     if not Settings.Distance_Test:
         marker += 1  # Add one to its original value
     counter = 1
@@ -82,17 +59,7 @@ def solution(counter, marker, distance):
 
 def detection(frame, counter, marker, distance):
     # Initialising variable
-    positions = []
-    headings = []
-    centres = []
-    height_of_target = []
     directory = None
-
-    # Gathering data from Pixhawk
-    if Settings.GPS:
-        position = vehicle.location.global_relative_frame
-        heading = vehicle.heading
-    # end if
 
     inner_switch = 0
 
@@ -122,8 +89,6 @@ def detection(frame, counter, marker, distance):
     height, width, numchannels = frame.shape
 
     centre_region = (x + w / 2, y + h / 2)
-    if Settings.GPS:
-        centre_target = (y + h / 2, x + w / 2)
 
     # grabs the angle for rotation to make the square level
     angle = cv2.minAreaRect(approx)[-1]  # -1 is the angle the rectangle is at
@@ -180,13 +145,6 @@ def detection(frame, counter, marker, distance):
                             (0, 0, 255),  # green
                             3)
         cv2.imshow("frame block", new)
-
-    # appends the data of the image to the list
-    if Settings.GPS:
-        positions.append([position.lat, position.lon, position.alt])
-        headings.append(heading)
-        centres.append(centre_target)
-        height_of_target.append(h)
 
     cv2.imwrite("colour%d.png" % counter, color)
 
@@ -385,16 +343,6 @@ def locating_square(contours, edged_copy):
 
 def main():
     print('Starting detection')
-    if Settings.GPS:
-        print('Connecting to drone...')
-
-        # Connect to vehicle and print some info
-        vehicle = connect('192.168.0.156:14550', wait_ready=True, baud=921600)
-
-        print('Connected to drone')
-        print('Autopilot Firmware version: %s' % vehicle.version)
-        print('Global Location: %s' % vehicle.location.global_relative_frame)
-
     capture_setting()
 
 

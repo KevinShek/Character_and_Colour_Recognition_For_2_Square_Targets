@@ -1,14 +1,8 @@
-import time
-from math import *
 import cv2
 import numpy as np
-import imutils.video
 from collections import Counter
 import webcolors
-import operator
-import csv
 import os
-import threading
 from rgb_discrete_dict import rgb_dict
 from config import Settings
 
