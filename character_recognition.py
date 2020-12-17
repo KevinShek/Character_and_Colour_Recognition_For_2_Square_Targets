@@ -21,14 +21,6 @@ elif Settings.capture == "pi":
 # Load Character Contour Area
 MIN_CONTOUR_AREA = 100
 
-# Load training and classification data
-npaClassifications = np.loadtxt("classifications_no_rotate.txt", np.float32)
-npaFlattenedImages = np.loadtxt("flatten_no_rotate.txt", np.float32)
-
-# reshape classifications array to 1D for k-nn
-npaClassifications = npaClassifications.reshape((npaClassifications.size, 1))
-
-
 class ContourWithData:
     # member variables ############################################################################
     npaContour = None  # contour
@@ -97,7 +89,7 @@ def character(counter, marker, distance):
 
             knn = cv2.ml.KNearest_create()  # initialise the knn
             # joins the train data with the train_labels
-            knn.train(npaFlattenedImages, cv2.ml.ROW_SAMPLE, npaClassifications)
+            knn.train(Settings.npaFlattenedImages, cv2.ml.ROW_SAMPLE, Settings.Classifications)
 
             # looks for the 3 nearest neighbours comparing to the flatten images (k = neighbours)
             retval, npaResults, neigh_resp, dists = knn.findNearest(npaROIResized, k=Settings.knn_value)

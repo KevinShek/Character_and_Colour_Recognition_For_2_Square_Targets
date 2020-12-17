@@ -1,5 +1,6 @@
 import os
 import cv2
+import numpy as np
 
 
 class Settings:
@@ -42,17 +43,17 @@ class Settings:
     capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
     # capture
     # detection and recognition
-    testing = "colour"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
+    testing = "character"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
     # or testing the "detection" this includes recognition or "character" or "colour" recognition capture must be
     # "image"
 
     # Testing the recognition to enable this capture has to be "image" and testing = "character" or "colour",
     # one at a time.
-    character_test = False  # character recognition test
-    colour_test = True  # colour recognition test
+    character_test = True  # character recognition test
+    colour_test = False  # colour recognition test
 
     # Methods
-    character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+    character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
     knn_value = 3  # the knn value used for knn process (only odd positive number works)
     preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
     # there is "otsu" or "custom"
@@ -67,3 +68,12 @@ class Settings:
     # There is 3 option 1, 2, 3. 1 is for the inner square only, 2 is for detecting the outer and inner square,
     # then 3 is detecting the outer square and force cropping to retrieve the inner square.
     square = 2
+
+    # character recognition for K-NN
+    # Load training and classification data
+    npaClassifications = np.loadtxt("classifications_no_rotate.txt", np.float32)
+    npaFlattenedImages = np.loadtxt("flatten_no_rotate.txt", np.float32)
+
+    # reshape classifications array to 1D for k-nn
+    Classifications = npaClassifications.reshape((npaClassifications.size, 1))
+
