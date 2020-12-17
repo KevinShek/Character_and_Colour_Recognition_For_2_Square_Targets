@@ -61,9 +61,7 @@ class ContourWithData:
     # contour area and any smaller or bigger is treated as noises and ignored
     def contour_valid(self, height, width):
         MAX_CONTOUR_AREA = height * width * 0.9
-        if MIN_CONTOUR_AREA < self.fltArea < MAX_CONTOUR_AREA:
-            return True
-        return False
+        return MIN_CONTOUR_AREA < self.fltArea < MAX_CONTOUR_AREA
 
 
 def character(counter, marker, distance):
@@ -72,7 +70,7 @@ def character(counter, marker, distance):
     # initialising variables
     guesses = [0] * 35  # create a list of 35 characters
     text = [] * 7  # create a list of 7 images
-    charpred = None
+    character_prediction = None
     directory = None
 
     for i in range(1, counter):
@@ -149,7 +147,7 @@ def character(counter, marker, distance):
         elif 9 <= mode <= 34:
             mode = mode + 56
 
-        charpred = chr(mode)
+        character_prediction = chr(mode)
 
     elif Settings.character == "tesseract":
         mode = Counter(text)
@@ -158,11 +156,11 @@ def character(counter, marker, distance):
             print(mode)
 
         if mode == Counter():
-            charpred = "None"
+            character_prediction = "None"
         else:
-            charpred = mode.most_common(1)[0][0]
+            character_prediction = mode.most_common(1)[0][0]
 
-    return charpred
+    return character_prediction
 
 
 def remove_inner_overlapping_chars(list_of_matching_chars):
@@ -364,8 +362,7 @@ def area_of_region_of_interest(img_thresh_copy, distance, marker, i):
         contourWithData.boundingRect = cv2.boundingRect(contourWithData.npaContour)  # get the bounding rect
         contourWithData.bounding_rect_info()  # get bounding rect info
         contourWithData.fltArea = cv2.contourArea(contourWithData.npaContour)  # calculate the contour area
-        allContoursWithData.append(
-            contourWithData)  # add contour with data object to list of all contours with data
+        allContoursWithData.append(contourWithData)  # add contour with data object to list of all contours with data
     # end for
 
     for contourWithData in allContoursWithData:  # for all contours
