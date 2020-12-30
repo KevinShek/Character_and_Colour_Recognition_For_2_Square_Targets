@@ -12,11 +12,11 @@ Recognise a white character from an saved image through the method of KNN or tes
 """
 
 # to initialise tesseract
-if Settings.capture == "pc":
-    pytesseract.pytesseract.tesseract_cmd = 'C:/Program Files/Tesseract-OCR/tesseract'
-    TESSDATA_PREFIX = 'C:/Program Files/Tesseract-OCR'
-elif Settings.capture == "pi":
-    print("you haven't set tesseract yet for the pi")
+if Settings.device_for_tesseract == "pc":
+    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+    TESSDATA_PREFIX = r"C:\Program Files\Tesseract-OCR"
+elif Settings.device_for_tesseract == "pi":
+    TESSDATA_PREFIX = r"\usr\share\tesseract-ocr"
 
 # Load Character Contour Area
 MIN_CONTOUR_AREA = 100
