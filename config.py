@@ -10,8 +10,8 @@ class Settings:
 
     # The steps of the programs
     Step_camera = False  # stages of camera activating
-    Step_letter = True  # view the stages of character recognition
-    Step_color = True  # view the stages of colour recognition
+    Step_letter = False  # view the stages of character recognition
+    Step_color = False  # view the stages of colour recognition
     Step_detection = False  # stages of detection
 
     # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
@@ -43,13 +43,13 @@ class Settings:
     capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
     # capture
     # detection and recognition
-    testing = "character"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
+    testing = "detection"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
     # or testing the "detection" this includes recognition or "character" or "colour" recognition capture must be
     # "image"
 
     # Testing the recognition to enable this capture has to be "image" and testing = "character" or "colour",
     # one at a time.
-    character_test = True  # character recognition test
+    character_test = False  # character recognition test
     colour_test = False  # colour recognition test
 
     # Methods
