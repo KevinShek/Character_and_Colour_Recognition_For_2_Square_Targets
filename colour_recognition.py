@@ -5,6 +5,7 @@ import webcolors
 import os
 from rgb_discrete_dict import rgb_dict
 from config import Settings
+from PIL import Image
 
 """
 The recognition of the inner square colour
@@ -150,10 +151,49 @@ def pre_processing(resize):
             new_resize_rgb = np.uint8(new_resize_rgb)
             cv2.imshow("new resize rgb", new_resize_rgb)
             cv2.waitKey(0)
+    elif Settings.preprocess_color == "temperature_colour":
+        _, inverse_otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+        inverse_otsu_converted = cv2.cvtColor(inverse_otsu, cv2.COLOR_GRAY2BGR)
+        list_of_result = [] * len(Settings.kelvin_list)
+        for i in range(0, len(Settings.kelvin_list)):
+            b, g, r = cv2.split(anchor_image)
+            kevin_value = Settings.kelvin_list[i]
+            temp = Settings.kelvin_table[kevin_value]
+            r_temp, g_temp, b_temp = temp
+            r = cv2.addWeighted(src1=r, alpha=r_temp/255.0, src2=0, beta=0, gamma=0)
+            g = cv2.addWeighted(src1=g, alpha=g_temp/255.0, src2=0, beta=0, gamma=0)
+            b = cv2.addWeighted(src1=b, alpha=b_temp/255.0, src2=0, beta=0, gamma=0)
+            balance_img = cv2.merge([b, g, r])
+            greyscale = cv2.cvtColor(balance_img, cv2.COLOR_BGR2GRAY)
+            difference = np.subtract(inverse_otsu[:, :], greyscale[:, :])
+            mean = np.sum(difference[:, :]) / number_of_white_pixel
+            # difference = np.subtract(inverse_otsu_converted[:, :, :], balance_img[:, :, :])
+            # mean = (np.sum(difference[:, :, 0]) / number_of_white_pixel + np.sum(difference[:, :, 1]) /
+            #         number_of_white_pixel + np.sum(difference[:, :, 2]) / number_of_white_pixel) / 3
+            list_of_result.append(mean)
+
+        position = np.argmin(list_of_result)
+        b, g, r = cv2.split(resize)
+        kevin_value = Settings.kelvin_list[position]
+        temp = Settings.kelvin_table[kevin_value]
+        r_temp, g_temp, b_temp = temp
+        r = cv2.addWeighted(src1=r, alpha=r_temp / 255.0, src2=0, beta=0, gamma=0)
+        g = cv2.addWeighted(src1=g, alpha=g_temp / 255.0, src2=0, beta=0, gamma=0)
+        b = cv2.addWeighted(src1=b, alpha=b_temp / 255.0, src2=0, beta=0, gamma=0)
+        balance_img = cv2.merge([b, g, r])
+        processed = balance_img
+
+        if Settings.Step_color:
+            print(position)
+            print(list_of_result[position])
+            cv2.imshow("balance_image", processed)
+            cv2.imshow("inverse_image", inverse_otsu_converted)
+            print(inverse_otsu_converted)
+            cv2.waitKey(0)
+
     else:
         processed = resize
     return processed
-
 
 def write_to_file(directory, marker, k, name, image):
     """
