@@ -223,9 +223,8 @@ def pre_processing(img):
 
     # capture the necessary character information (the values were given as estimation the character would
     # occupy the region
-    roi = img[int((height / 2) - (height / 2) * 0.90):int((height / 2) + (height / 2) * 0.90), int((width / 2) - (width
-                                                                                                                  / 2) * 0.90):int(
-        (width / 2) + (width / 2) * 0.90)]
+    roi = img[int((height / 2) - (height / 2) * 0.85):int((height / 2) + (height / 2) * 0.85), int((width / 2) - (width
+            / 2) * 0.85):int((width / 2) + (width / 2) * 0.85)]
 
     resize = cv2.resize(roi, (Settings.resize_height, Settings.resize_width), interpolation=cv2.INTER_AREA)
 

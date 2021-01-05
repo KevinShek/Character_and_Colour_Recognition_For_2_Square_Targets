@@ -1,11 +1,9 @@
 requirements.txt
 .idea
 __pycache__
-colour1.png
-colour2.png
-colour3.png
-colour4.png
-colour5.png
-colour6.png
-colour7.png
-TestData3.mp4
+*.png
+*.mp4
+color
+results
+threshold
+*.csv
