@@ -10,7 +10,7 @@ class Settings:
 
     # The steps of the programs
     Step_camera = False  # stages of camera activating
-    Step_letter = True  # view the stages of character recognition
+    Step_letter = False  # view the stages of character recognition
     Step_color = False  # view the stages of colour recognition
     Step_detection = False  # stages of detection
 
@@ -50,16 +50,16 @@ class Settings:
     # Testing the recognition to enable this capture has to be "image" and testing = "character" or "colour",
     # one at a time.
     character_test = True  # character recognition test
-    colour_test = False  # colour recognition test
+    colour_test = True  # colour recognition test
 
     # Methods
     device_for_tesseract = "pc"
-    character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+    character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
     knn_value = 3  # the knn value used for knn process (only odd positive number works)
     preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
     # there is "otsu" or "custom"
-    colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
-    preprocess_color = "temperature_colour"  # the pre processing on normalising the colour by the use of character as
+    colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+    preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
     # an anchor for actual white there are 3 options, "rgb_difference", "hsv_difference", or "" to normalise the colour
 
     # the following resize height and width are used for the resizing of the images before pre-processing occurs
