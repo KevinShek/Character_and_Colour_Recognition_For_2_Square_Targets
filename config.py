@@ -25,7 +25,7 @@ class Settings:
     script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 
     # This is information for testing a single frame
-    rel_path = "Test_Images/orginal1_2.png"  # where is the image is located from where the config is
+    rel_path = "Test_Images/267_6frame.png"  # where is the image is located from where the config is
     # current located
     abs_file_path = os.path.join(script_dir, rel_path)  # attaching the location
     test_image = cv2.imread(abs_file_path)  # reading in the image
@@ -44,7 +44,7 @@ class Settings:
     capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
     # capture
     # detection and recognition
-    testing = "detection_only"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
+    testing = "detection"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
     # or testing the "detection" this includes recognition or "detection_only" or "character" or "colour" recognition
     # capture must be "image"
 
@@ -59,7 +59,7 @@ class Settings:
     knn_value = 3  # the knn value used for knn process (only odd positive number works)
     preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
     # there is "otsu" or "custom"
-    colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+    colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
     preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
     # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
 

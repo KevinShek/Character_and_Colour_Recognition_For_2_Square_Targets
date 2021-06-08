@@ -1,7 +1,6 @@
 requirements.txt
 .idea
 __pycache__
-*.png
 *.mp4
 color
 results
@@ -9,3 +8,4 @@ threshold
 *.csv
 TimeTest.py
 *.xlsx
+venv
