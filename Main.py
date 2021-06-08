@@ -226,6 +226,7 @@ def capture_setting():
         cap = PiRGBArray(camera, size=(1280, 720))
 
         for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
+            #  to start the progress of capture and don't stop unless the counter increases and has surpass 5 seconds
             if counter == 1 or end - start < 5:
                 frame = image.array
                 end = time.time()
@@ -265,6 +266,8 @@ def capture_setting():
             else:
                 detection(Settings.test_image, counter, marker, distance)
                 solution(counter + 1, marker, distance)
+        elif Settings.testing == "detection_only":
+            detection(Settings.test_image, counter, marker, distance)
         elif Settings.testing == "character":
             print(character_recognition.character(counter + 1, marker, distance))
 
@@ -299,8 +302,8 @@ def write_to_file(directory, marker, k, name, image):
 def edge_detection(frame, inner_switch):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # converts to gray
     if inner_switch == 1:
-        blurred_inner = cv2.GaussianBlur(frame, (5, 5), 0)  # blur the gray image for better edge detection
-        edged_inner = cv2.Canny(blurred_inner, 14, 10)  # the lower the value the more detailed it would be
+        blurred_inner = cv2.GaussianBlur(gray, (3, 3), 0)  # blur the gray image for better edge detection
+        edged_inner = cv2.Canny(blurred_inner, 5, 5)  # the lower the value the more detailed it would be
         edged = edged_inner
         if Settings.Step_camera:
             cv2.imshow('edge_inner', edged_inner)

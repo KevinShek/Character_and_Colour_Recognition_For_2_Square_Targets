@@ -45,6 +45,10 @@ def colour(counter, marker, distance):
         elif Settings.Rover_Marker:
             directory = "marker={0}".format(marker)
 
+        if Settings.preprocess_color == "hsv_difference":
+            resize_hsv = np.uint8(new_resize)
+            new_resize = cv2.cvtColor(resize_hsv, cv2.COLOR_HSV2RGB)
+
         write_to_file(directory, marker, k, "color", new_resize)
 
         if Settings.colour == "rgb":

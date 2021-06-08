@@ -8,3 +8,4 @@ results
 threshold
 *.csv
 TimeTest.py
+*.xlsx
