@@ -157,10 +157,10 @@ def detection(frame, counter, marker, distance):
     elif Settings.Distance_Test:
         directory = "{0}".format(Settings.dictory)
         counter = Settings.counter
-
-    write_to_file(directory, marker, counter, "results", color)
-    write_to_file(directory, marker, counter, "captured", roi)
-    write_to_file(directory, marker, counter, "frame", frame)
+    if Settings.save_results:
+        write_to_file(directory, marker, counter, "results", color)
+        write_to_file(directory, marker, counter, "captured", roi)
+        write_to_file(directory, marker, counter, "frame", frame)
 
     print("Detected and saved a target")
 

@@ -49,7 +49,8 @@ def colour(counter, marker, distance):
             resize_hsv = np.uint8(new_resize)
             new_resize = cv2.cvtColor(resize_hsv, cv2.COLOR_HSV2RGB)
 
-        write_to_file(directory, marker, k, "color", new_resize)
+        if Settings.save_results:
+            write_to_file(directory, marker, k, "color", new_resize)
 
         if Settings.colour == "rgb":
             results.append(rgb_colour(resizeBGR).most_common(1)[0][0])

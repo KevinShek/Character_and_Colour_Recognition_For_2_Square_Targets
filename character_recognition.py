@@ -82,7 +82,8 @@ def character(counter, marker, distance):
         elif Settings.Distance_Test:
             directory = "{0}".format(Settings.dictory)
 
-        write_to_file(directory, marker, i, "contour", img_thresh_copy)
+        if Settings.save_results:
+            write_to_file(directory, marker, i, "contour", img_thresh_copy)
 
         if Settings.character == "knn":
             npaROIResized = area_of_region_of_interest(img_thresh_copy, distance, marker, i)
@@ -387,7 +388,8 @@ def area_of_region_of_interest(img_thresh_copy, distance, marker, i):
         elif Settings.Distance_Test:
             directory = "{0}".format(Settings.dictory)
 
-        write_to_file(directory, marker, i, "chosen", imgROIResized)
+        if Settings.save_results:
+            write_to_file(directory, marker, i, "chosen", imgROIResized)
 
         npaROIResized = imgROIResized.reshape((1, w * h))  # flatten image into 1d numpy array
 

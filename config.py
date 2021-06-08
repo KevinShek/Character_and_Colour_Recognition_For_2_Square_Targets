@@ -19,12 +19,13 @@ class Settings:
     Rover_Marker = False  # saves images into their individual marker files
     Save_Data = True  # Saving Data into files
     Distance_Test = False
+    save_results = False  # to allow saving to occur
 
     # local path
     script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
 
     # This is information for testing a single frame
-    rel_path = "Test_Images/267_6frame.png"  # where is the image is located from where the config is
+    rel_path = "Test_Images/orginal1_2.png"  # where is the image is located from where the config is
     # current located
     abs_file_path = os.path.join(script_dir, rel_path)  # attaching the location
     test_image = cv2.imread(abs_file_path)  # reading in the image
@@ -54,11 +55,11 @@ class Settings:
 
     # Methods
     device_for_tesseract = "pc"
-    character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+    character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
     knn_value = 3  # the knn value used for knn process (only odd positive number works)
     preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
     # there is "otsu" or "custom"
-    colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+    colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
     preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
     # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
 
