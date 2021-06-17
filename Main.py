@@ -78,10 +78,17 @@ def detection(frame, counter, marker, distance):
     (contours, _) = cv2.findContours(edged_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
 
     try:
-        x, y, w, h, approx = locating_square(contours, edged_copy)
+        x, y, w, h, approx, cnt = locating_square(contours, edged_copy)
     except TypeError:
         Settings.switch = False
         return False
+
+    if Settings.Step_camera:
+        rect = cv2.minAreaRect(cnt)
+        box = cv2.boxPoints(rect)
+        box = np.int0(box)
+        cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
+        cv2.imshow("frame", frame)
 
     roi = frame[y:y + h, x:x + w]
 
@@ -118,7 +125,7 @@ def detection(frame, counter, marker, distance):
             cv2.waitKey(0)
 
         try:
-            inner_x, inner_y, inner_w, inner_h, approx = locating_square(inner_contours, edged_copy)
+            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edged_copy)
         except TypeError:
             if Settings.testing == "detection":
                 print("Detection failed to locate the inner square")
@@ -316,7 +323,7 @@ def edge_detection(frame, inner_switch):
         if Settings.Step_camera:
             cv2.imshow('edge_outer', edged_outer)
             cv2.imshow("blurred_outer", blurred_outer)
-            cv2.waitKey(0)
+            # cv2.waitKey(0)
     edged_copy = edged.copy()
     return edged_copy
 
@@ -341,7 +348,7 @@ def locating_square(contours, edged_copy):
             keepSolidity = solidity > 0.9  # to check if it's near to be an area of a square
             keepAspectRatio = 0.6 <= aspectRatio <= 1.4
             if keepDims and keepSolidity and keepAspectRatio:  # checks if the values are true
-                return x, y, w, h, approx
+                return x, y, w, h, approx, c
 
 
 def main():

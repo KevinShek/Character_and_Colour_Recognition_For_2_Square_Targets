@@ -19,7 +19,7 @@ class Settings:
     Rover_Marker = False  # saves images into their individual marker files
     Save_Data = True  # Saving Data into files
     Distance_Test = False
-    save_results = False  # to allow saving to occur
+    save_results = True  # to allow saving to occur
 
     # local path
     script_dir = os.path.dirname(__file__)  # <-- absolute dir the script is in
@@ -38,13 +38,13 @@ class Settings:
     alphanumeric_character = None
     file_path = "8M"
 
-    video = "TestData3.mp4"  # video used for testing and has to be in the exact location of the config file
+    video = "video/target_only.mp4"  # video used for testing and has to be in the exact location of the config file
 
     # Information
-    capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
+    capture = "pc"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
     # capture
     # detection and recognition
-    testing = "detection"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
+    testing = "video"  # are you running the program for a "video" to use this capture has to be "pc" or "pi"
     # or testing the "detection" this includes recognition or "detection_only" or "character" or "colour" recognition
     # capture must be "image"
 
