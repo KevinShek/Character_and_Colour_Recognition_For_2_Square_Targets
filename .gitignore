@@ -10,3 +10,4 @@ threshold
 TimeTest.py
 *.xlsx
 venv
+result_dir/exp
