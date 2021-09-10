@@ -12,86 +12,73 @@ The recognition of the inner square colour
 """
 
 
-def colour(counter, marker, distance):
+def colour(img):
     results = []  # empty list
     general_name = None
-    directory = None
-    for k in range(1, counter):
-        # initialise variables
-        current_mode = 0
-        if Settings.colour_test:
-            img = Settings.test_image
-        else:
-            img = cv2.imread("colour%d.png" % k)
+    config = Settings()
 
-        nroi = cv2.resize(img, (Settings.resize_height, Settings.resize_width), interpolation=cv2.INTER_AREA)
+    # the following resize height and width are used for the resizing of the images before pre-processing occurs
+    resize_height = 100
+    resize_width = 100
 
-        new_resize = pre_processing(nroi)
+    nroi = cv2.resize(img, (resize_height, resize_width), interpolation=cv2.INTER_AREA)
 
-        h = 30
-        w = 30
+    new_resize = pre_processing(nroi, config, resize_height, resize_width)
 
-        resizeBGR = cv2.resize(new_resize, (w, h))  # reduces the size of the image so the process would run fast
+    h = 30
+    w = 30
 
-        if Settings.Step_color:
-            cv2.imshow("image", img)
-            cv2.imshow("resizeBGR", resizeBGR)
-            cv2.waitKey(0)
+    resizeBGR = cv2.resize(new_resize, (w, h))  # reduces the size of the image so the process would run fast
 
-        if Settings.Save_Data:
-            directory = "color"
-        elif Settings.Static_Test:
-            directory = "{0}".format(distance)
-        elif Settings.Rover_Marker:
-            directory = "marker={0}".format(marker)
+    if config.Step_color:
+        cv2.imshow("image", img)
+        cv2.imshow("resizeBGR", resizeBGR)
+        cv2.waitKey(0)
 
-        if Settings.preprocess_color == "hsv_difference":
-            resize_hsv = np.uint8(new_resize)
-            new_resize = cv2.cvtColor(resize_hsv, cv2.COLOR_HSV2RGB)
+    if config.preprocess_color == "hsv_difference":
+        resize_hsv = np.uint8(new_resize)
+        new_resize = cv2.cvtColor(resize_hsv, cv2.COLOR_HSV2RGB)
 
-        if Settings.save_results:
-            write_to_file(directory, marker, k, "color", new_resize)
+    if config.colour == "rgb":
+        results.append(rgb_colour(resizeBGR, config).most_common(1)[0][0])
 
-        if Settings.colour == "rgb":
-            results.append(rgb_colour(resizeBGR).most_common(1)[0][0])
-
-        elif Settings.colour == "hsv":
-            results.append(hsv_colour(resizeBGR))
+    elif config.colour == "hsv":
+        results.append(hsv_colour(resizeBGR, config))
 
     mode = Counter(results)
 
-    if Settings.Step_color:
+    if config.Step_color:
         print(mode)
 
     if mode == Counter():
         general_name = "None"
     else:
-        if Settings.colour == "rgb":
+        if config.colour == "rgb":
             colourname = mode.most_common(1)[0][0]
             general_name = rgb_dict(colourname)
-        elif Settings.colour == "hsv":
+        elif config.colour == "hsv":
             general_name = mode.most_common(1)[0][0]
 
-    return general_name
+    return general_name, new_resize
 
 
-def pre_processing(resize):
+def pre_processing(resize, config, resize_height, resize_width):
     # Convert the image to grayscale and turn to outline of the letter
     gray = cv2.cvtColor(resize, cv2.COLOR_BGR2GRAY)
     gauss = cv2.GaussianBlur(gray, (5, 5), 0)
     _, otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-    number_of_white_pixel = (Settings.resize_height * Settings.resize_width) - cv2.countNonZero(otsu)
+    number_of_white_pixel = (resize_height * resize_width) - cv2.countNonZero(otsu)
     otsu_converted = cv2.cvtColor(otsu, cv2.COLOR_GRAY2BGR)
     anchor_image = cv2.subtract(resize, otsu_converted)
-    white_image = np.ones((Settings.resize_height, Settings.resize_width, 3)) * 255  # creating pure white image
-    if Settings.Step_color:
+    white_image = np.ones((resize_height, resize_width, 3)) * 255  # creating pure white image
+    if config.Step_color:
         cv2.imshow("resize", resize)
         cv2.imshow("otsu", otsu)
         cv2.imshow("anchor_image", anchor_image)
         cv2.imshow("white_image", white_image)
         print(number_of_white_pixel)
         cv2.waitKey(0)
-    if Settings.preprocess_color == "rgb_difference":
+    if config.preprocess_color == "rgb_difference":
         difference = np.subtract(white_image[:, :, :], anchor_image[:, :, :])  # subtracting the pure white image by the
         # image of the letter to get the difference
         actual_difference = np.where(difference == 255, 0, difference)  # replace all 255 to 0 (away to rid the
@@ -99,7 +86,7 @@ def pre_processing(resize):
         mean1 = np.sum(actual_difference[:, :, 0])/number_of_white_pixel  # mean for the blue
         mean2 = np.sum(actual_difference[:, :, 1])/number_of_white_pixel  # mean for the green
         mean3 = np.sum(actual_difference[:, :, 2])/number_of_white_pixel  # mean for the red
-        # new_resize2 = np.zeros((Settings.resize_height, Settings.resize_width, 3))
+        # new_resize2 = np.zeros((resize_height, resize_width, 3))
         new_resize = np.add(resize[:, :, :], [mean1, mean2, mean3])  # adding the means to their respective bgr
         # new_resize = new_resize/255
         # new_resize2 = np.add(resize[1, :, :], mean1)
@@ -110,7 +97,7 @@ def pre_processing(resize):
         new_resize = np.where(new_resize > 255, 255, new_resize)  # replace all over 255 to 255
         new_resize = np.uint8(new_resize)  # convert the values from a float to an int8 for imshow
         processed = new_resize
-        if Settings.Step_color:
+        if config.Step_color:
             cv2.imshow("differenecee", difference)
             cv2.imshow("actual_difference", actual_difference)
             print("resize before = {0}".format(resize))
@@ -120,7 +107,7 @@ def pre_processing(resize):
             cv2.imshow("new resize", new_resize)
             cv2.waitKey(0)
 
-    elif Settings.preprocess_color == "hsv_difference":
+    elif config.preprocess_color == "hsv_difference":
         white_image_hsv = np.float32(white_image)
         anchor_image_hsv = np.float32(anchor_image)
         resize_hsv = np.float32(resize)
@@ -143,7 +130,7 @@ def pre_processing(resize):
 
         processed = new_resize
 
-        if Settings.Step_color:
+        if config.Step_color:
             cv2.imshow("differenecee", difference)
             # print("white_image_hsv = {0}".format(white_image_hsv))
             # print("anchor_hsv = {0}".format(anchor_hsv))
@@ -156,14 +143,14 @@ def pre_processing(resize):
             new_resize_rgb = np.uint8(new_resize_rgb)
             cv2.imshow("new resize rgb", new_resize_rgb)
             cv2.waitKey(0)
-    elif Settings.preprocess_color == "temperature_colour":
+    elif config.preprocess_color == "temperature_colour":
         _, inverse_otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         inverse_otsu_converted = cv2.cvtColor(inverse_otsu, cv2.COLOR_GRAY2BGR)
-        list_of_result = [] * len(Settings.kelvin_list)
-        for i in range(0, len(Settings.kelvin_list)):
+        list_of_result = [] * len(config.kelvin_list)
+        for i in range(0, len(config.kelvin_list)):
             b, g, r = cv2.split(anchor_image)
-            kevin_value = Settings.kelvin_list[i]
-            temp = Settings.kelvin_table[kevin_value]
+            kevin_value = config.kelvin_list[i]
+            temp = config.kelvin_table[kevin_value]
             r_temp, g_temp, b_temp = temp
             r = cv2.addWeighted(src1=r, alpha=r_temp/255.0, src2=0, beta=0, gamma=0)
             g = cv2.addWeighted(src1=g, alpha=g_temp/255.0, src2=0, beta=0, gamma=0)
@@ -179,8 +166,8 @@ def pre_processing(resize):
 
         position = np.argmin(list_of_result)
         b, g, r = cv2.split(resize)
-        kevin_value = Settings.kelvin_list[position]
-        temp = Settings.kelvin_table[kevin_value]
+        kevin_value = config.kelvin_list[position]
+        temp = config.kelvin_table[kevin_value]
         r_temp, g_temp, b_temp = temp
         r = cv2.addWeighted(src1=r, alpha=r_temp / 255.0, src2=0, beta=0, gamma=0)
         g = cv2.addWeighted(src1=g, alpha=g_temp / 255.0, src2=0, beta=0, gamma=0)
@@ -188,7 +175,7 @@ def pre_processing(resize):
         balance_img = cv2.merge([b, g, r])
         processed = balance_img
 
-        if Settings.Step_color:
+        if config.Step_color:
             print(position)
             print(list_of_result[position])
             cv2.imshow("balance_image", processed)
@@ -200,38 +187,16 @@ def pre_processing(resize):
         processed = resize
     return processed
 
-def write_to_file(directory, marker, k, name, image):
-    """
-  For writing an image file to the specified directory with standardised file name format
-  - directory - folder to save file
-  - marker - the target number
-  - k - the number of image being viewed
-  - image - saving the image of interest
-  """
-    if directory is not None:
-        # Make sure the directory exists
-        if not os.path.exists(directory):
-            os.makedirs(directory)
 
-        # Form file name
-        filename = f"{directory}/{marker}_{k}{name}.png"
-
-        # Form full path
-        filepath = os.path.join(Settings.script_dir, filename)
-
-        # Write file
-        cv2.imwrite(filepath, image)
-
-
-def hsv_colour(resizeBGR):
-    if Settings.preprocess_color == "hsv_difference":
+def hsv_colour(resizeBGR, config):
+    if config.preprocess_color == "hsv_difference":
         resizeHSV = resizeBGR
     else:
         resizeBGR = np.float32(resizeBGR)
         resizeHSV = cv2.cvtColor(resizeBGR, cv2.COLOR_BGR2HSV_FULL)
         resizeHSV[:, :, 1] = np.dot(resizeHSV[:, :, 1], 255)
 
-    if Settings.Step_color:
+    if config.Step_color:
         cv2.imshow("resize", resizeHSV)
         cv2.waitKey(0)
 
@@ -255,7 +220,7 @@ def hsv_colour(resizeBGR):
 
     # initialising variables
     ratio = [] * len(boundaries)
-    if Settings.Step_color:
+    if config.Step_color:
         i = 0
 
     # comparing each pixel of the picture and append the colour name in to a list (BGR to RGB to get the name)
@@ -267,7 +232,7 @@ def hsv_colour(resizeBGR):
 
         ratio.append(np.round((cv2.countNonZero(mask) / (resizeHSV.size / 3)) * 100, 2))
 
-        if Settings.Step_color:
+        if config.Step_color:
             print(color, ratio[i])
             cv2.imshow("mask", mask)
             i = i + 1
@@ -280,15 +245,15 @@ def hsv_colour(resizeBGR):
     return boundaries[position][0]
 
 
-def rgb_colour(resizeBGR):
-    if Settings.preprocess_color == "hsv_difference":
+def rgb_colour(resizeBGR, config):
+    if config.preprocess_color == "hsv_difference":
         resizeBGR = np.float32(resizeBGR)
         resizeRGB = cv2.cvtColor(resizeBGR, cv2.COLOR_HSV2RGB)
     else:
         resizeRGB = cv2.cvtColor(resizeBGR, cv2.COLOR_BGR2RGB)
 
-    if Settings.Step_color:
-        if Settings.preprocess_color == "hsv_difference":
+    if config.Step_color:
+        if config.preprocess_color == "hsv_difference":
             resizeBGR = cv2.cvtColor(resizeBGR, cv2.COLOR_HSV2BGR)
             cv2.imshow("resize", resizeBGR)
             cv2.waitKey(0)

@@ -3,87 +3,57 @@ import cv2
 import numpy as np
 import csv
 import os
-import colour_recognition as colour_recognition
-import character_recognition as character_recognition
+import colour_recognition
+import character_recognition
+from pathlib import Path
+import itertools
 from config import Settings
-if Settings.capture == "pi":
-    from picamera.array import PiRGBArray
-    from picamera import PiCamera
+from saving import Saving
+from collections import Counter
 
 """
 The following code contains the detection of the square target and saves only the inner square data
 """
 
 
-def solution(counter, marker, distance):
-    if not Settings.Distance_Test:
-        print("detection of marker", marker, "located")
-        print(character_recognition.character(counter, marker, distance) +
-              " is located for marker", marker)
-        print(colour_recognition.colour(counter, marker, distance) + " is the colour of ground marker",
-              marker)
-    else:
-        print(marker)
+def solution(counter, marker, predicted_character, predicted_color, result_dir):
+    with open(f'{result_dir}/results.csv', 'a') as csvfile:  # for testing purposes
+        filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        filewriter.writerow([str(marker), str(predicted_character), str(predicted_color)])
 
-    if Settings.Save_Data or Settings.Static_Test:
-        with open('results.csv', 'a') as csvfile:  # for testing purposes
-            filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-            filewriter.writerow(
-                [str(marker), str(character_recognition.character(counter, marker, distance)),
-                 str(colour_recognition.colour(counter, marker, distance))])
+    print("detection of marker", marker, "located")
+    print(predicted_character + " is located for marker", marker)
+    print(predicted_color + " is the colour of ground marker", marker)
 
-    if Settings.Distance_Test:
-        if Settings.switch:
-            name = "{0}_{1}_{2}".format(Settings.file_path, Settings.number, Settings.character)
-            if character_recognition.character(counter, marker, distance) == Settings.alphanumeric_character:
-                comparison = 1
-            else:
-                comparison = 0
-            with open('{0}.csv'.format(name), 'a') as csvfile:  # for testing purposes
-                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                filewriter.writerow(
-                    [str(marker), 1, str(character_recognition.character(counter, marker, distance)), comparison,
-                     str(colour_recognition.colour(counter, marker, distance))])
-        else:
-            name = "{0}_{1}_{2}".format(Settings.file_path, Settings.number, Settings.character)
-            with open('{0}.csv'.format(name), 'a') as csvfile:  # for testing purposes
-                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                filewriter.writerow([str(marker), 0, 0, 0])
-
-    if not Settings.Distance_Test:
-        marker += 1  # Add one to its original value
     counter = 1
 
     return marker, counter
 
 
-def detection(frame, counter, marker, distance):
+def detection(frame, config):
     # Initialising variable
-    directory = None
-
     inner_switch = 0
 
-    if Settings.Distance_Test:
-        height, width, _ = frame.shape
-        if float(Settings.number) <= 1.0:
-            frame = frame
-        elif float(Settings.number) <= 2.0:
-            frame = frame[int(height/4):int(3*height/4), int(width/4):int(3*width/4)]
-        else:
-            frame = frame[int(height / 3):int(3 * height / 4), int(width / 3):int(3 * width / 4)]
+    # if config.Distance_Test:
+    #     height, width, _ = frame.shape
+    #     if float(config.number) <= 1.0:
+    #         frame = frame
+    #     elif float(config.number) <= 2.0:
+    #         frame = frame[int(height/4):int(3*height/4), int(width/4):int(3*width/4)]
+    #     else:
+    #         frame = frame[int(height / 3):int(3 * height / 4), int(width / 3):int(3 * width / 4)]
 
-    edged_copy = edge_detection(frame, inner_switch)
+    edged_copy = edge_detection(frame, inner_switch, config)
 
     # find contours in the threshold image and initialize the
     (contours, _) = cv2.findContours(edged_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
 
     try:
-        x, y, w, h, approx, cnt = locating_square(contours, edged_copy)
+        x, y, w, h, approx, cnt = locating_square(contours, edged_copy, config)
     except TypeError:
-        Settings.switch = False
-        return False
+        return _, _, _, False
 
-    if Settings.Step_camera:
+    if config.Step_camera:
         rect = cv2.minAreaRect(cnt)
         box = cv2.boxPoints(rect)
         box = np.int0(box)
@@ -113,33 +83,32 @@ def detection(frame, counter, marker, distance):
     img_rotated = cv2.warpAffine(frame, rotated, (width, height))  # width and height was changed
     img_cropped = cv2.getRectSubPix(img_rotated, (w, h), tuple(centre_region))
 
-    if Settings.square == 2:
+    if config.square == 2:
         inner_switch = 1
         new_roi = img_cropped[int((h / 2) - (h / 3)):int((h / 2) + (h / 3)), int((w / 2) - (w / 3)):int((w / 2) + (w / 3))]
-        edge = edge_detection(new_roi, inner_switch)
+        edge = edge_detection(new_roi, inner_switch, config)
         (inner_contours, _) = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
 
-        if Settings.Step_detection:
+        if config.Step_detection:
             cv2.imshow("inner_edge", edge)
             cv2.imshow("testing", frame)
             cv2.waitKey(0)
 
         try:
-            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edged_copy)
+            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edged_copy, config)
         except TypeError:
-            if Settings.testing == "detection":
+            if config.testing == "detection":
                 print("Detection failed to locate the inner square")
-                Settings.switch = False
-            return False
+            return _, _, _, False
         color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
 
-    elif Settings.square == 3:
+    elif config.square == 3:
         color = img_cropped[int((h / 2) - (h / 4)):int((h / 2) + (h / 4)), int((w / 2) - (w / 4)):int((w / 2) + (w / 4))]
 
-    elif Settings.square == 1:
+    elif config.square == 1:
         color = img_cropped
 
-    if Settings.Step_detection:
+    if config.Step_detection:
         cv2.imshow("rotated image", img_cropped)
         cv2.imshow("inner square", color)
 
@@ -153,41 +122,28 @@ def detection(frame, counter, marker, distance):
                             3)
         cv2.imshow("frame block", new)
 
-    cv2.imwrite("colour%d.png" % counter, color)
-
-    if Settings.Save_Data:
-        directory = "results"
-    elif Settings.Static_Test:
-        directory = "{0}".format(distance)
-    elif Settings.Rover_Marker:
-        directory = "marker={0}".format(marker)
-    elif Settings.Distance_Test:
-        directory = "{0}".format(Settings.dictory)
-        counter = Settings.counter
-    if Settings.save_results:
-        write_to_file(directory, marker, counter, "results", color)
-        write_to_file(directory, marker, counter, "captured", roi)
-        write_to_file(directory, marker, counter, "frame", frame)
-
-    print("Detected and saved a target")
-
-    if Settings.Step_detection:
+    if config.Step_detection:
         cv2.imshow("captured image", roi)
         cv2.waitKey(0)
 
-    return True
+    return color, roi, frame, True
 
 
 def capture_setting():
+    # intialising the key information
     counter = 1
     marker = 1
     distance = 0
+    predicted_character_list = []
+    predicted_color_list = []
     end = time.time()
     start = time.time()
+    config = Settings()
+    save = Saving(config.name_of_folder, config.exist_ok)
 
-    if Settings.capture == "pc":
-        if Settings.testing == "video":
-            cap = cv2.VideoCapture(Settings.video)
+    if config.capture == "pc":
+        if config.testing == "video":
+            cap = cv2.VideoCapture(config.media)
         else:
             cap = cv2.VideoCapture(0)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)  # 800 default
@@ -200,30 +156,57 @@ def capture_setting():
         print('Camera on')
         while True:
             if counter == 1:
-                if Settings.Static_Test:
-                    distance = input("Distance it was taken")
+                if config.pause:
+                    distance = input("Are you Ready?")
             if counter == 1 or end - start < 5:
                 end = time.time()
                 ret, frame = cap.read()
-                if Settings.Step_camera:
+                if config.Step_camera:
                     cv2.imshow('frame', frame)
                     k = cv2.waitKey(5) & 0xFF
                     if k == 27:
                         break
 
-                if detection(frame, counter, marker, distance):
+                color, roi, frame, success = detection(frame, config)
+
+                if success:
                     counter = counter + 1
 
                     # time that the target has been last seen
                     start = time.time()
 
+                    predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                    predicted_color, processed_image = colour_recognition.colour(color)
+
+                    predicted_character_list.append(predicted_character)
+                    predicted_color_list.append(predicted_color)
+
+                    if config.save_results:
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                        for value, data in enumerate(name_of_results):
+                            image_name = f"{marker}_{data[value]}.jpg"
+                            image = data[value + 3]
+                            if image is None:
+                                save.save_the_image(image_name, image)
+
                 if counter == 8:
-                    marker, counter = solution(counter, marker, distance)
+                    common_character = Counter(predicted_character_list).most_common(1)[0][0]
+                    common_color = Counter(predicted_color_list).most_common(1)[0][0]
+                    solution(counter, marker, common_character, common_color, save.save_dir)
+                    predicted_character_list = []
+                    predicted_color_list = []
 
             else:
-                marker, counter = solution(counter, marker, distance)
+                common_character = Counter(predicted_character_list).most_common(1)[0][0]
+                common_color = Counter(predicted_color_list).most_common(1)[0][0]
+                solution(counter, marker, common_character, common_color, save.save_dir)
+                predicted_character_list = []
+                predicted_color_list = []
 
-    elif Settings.capture == "pi":
+    elif config.capture == "pi":
+        from picamera.array import PiRGBArray
+        from picamera import PiCamera
+
         camera = PiCamera()
         camera.resolution = (1280, 720)
         camera.brightness = 50  # 50 is default
@@ -238,89 +221,128 @@ def capture_setting():
                 frame = image.array
                 end = time.time()
 
-                if detection(frame, counter, marker, distance):
+                color, roi, frame, success = detection(frame, config)
+
+                if success:
                     counter = counter + 1
 
                     # time that the target has been last seen
                     start = time.time()
 
+                    predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                    predicted_color, processed_image = colour_recognition.colour(color)
+
+                    predicted_character_list.append(predicted_character)
+                    predicted_color_list.append(predicted_color)
+
+                    if config.save_results:
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                        for value, data in enumerate(name_of_results):
+                            image_name = f"{marker}_{data[value]}.jpg"
+                            image = data[value + 3]
+                            if image is None:
+                                save.save_the_image(image_name, image)
+
                 if counter == 8:
-                    marker, counter = solution(counter, marker, distance)
+                    common_character = Counter(predicted_character_list).most_common(1)[0][0]
+                    common_color = Counter(predicted_color_list).most_common(1)[0][0]
+                    marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)
+                    predicted_character_list = []
+                    predicted_color_list = []
 
             else:
-                marker, counter = solution(counter, marker, distance)
+                common_character = Counter(predicted_character_list).most_common(1)[0][0]
+                common_color = Counter(predicted_color_list).most_common(1)[0][0]
+                marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)
+                predicted_character_list = []
+                predicted_color_list = []
 
         cap.truncate(0)
-    elif Settings.capture == "image":
-        if Settings.testing == "detection":
-            if Settings.Distance_Test:
-                Characters = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
-                              'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-                for j in np.arange(0.5, 6.5, 0.5):
-                    for i in range(0, len(Characters)):
-                        rel_path = "Test_Images/resolution/{0}/{1}/{2}_{1}_{0}.png".format(Settings.file_path,
-                            j, Characters[i])  # where is the image is located from where the config is current
-                        # located
-                        Settings.number = j
-                        Settings.dictory = "resolution/{0}/{1}".format(Settings.file_path, j)
-                        Settings.switch = True
-                        abs_file_path = os.path.join(Settings.script_dir, rel_path)  # attaching the location
-                        test_image = cv2.imread(abs_file_path)  # reading in the image
-                        marker = (os.path.basename(rel_path))
-                        Settings.alphanumeric_character = (Characters[i])
-                        detection(test_image, counter, marker, distance)
-                        solution(counter + 1, marker, distance)
-            else:
-                detection(Settings.test_image, counter, marker, distance)
-                solution(counter + 1, marker, distance)
-        elif Settings.testing == "detection_only":
-            detection(Settings.test_image, counter, marker, distance)
-        elif Settings.testing == "character":
-            print(character_recognition.character(counter + 1, marker, distance))
+    elif config.capture == "image":
+        cap = [] # to store the names of the images
+        data_dir = Path(config.media)
 
-        elif Settings.testing == "colour":
-            print(colour_recognition.colour(counter + 1, marker, distance))
+        # the following code interite over the extension that exist within a folder and place them into a single list
+        image_count = list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png')))
+        # image_count = len(list(data_dir.glob('*.jpg')))
+        for name in image_count:
+                # head, tail = ntpath.split(name)
+                filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
+                cap.append(filename)
+                test_image = cv2.imread(str(filename))
+                marker = Path(name).stem # grabs the name with the extension
 
+                color, roi, frame, success = detection(test_image, config)
 
-def write_to_file(directory, marker, k, name, image):
-    """
-  For writing an image file to the specified directory with standardised file name format
-  - directory - folder to save file
-  - marker - the target number
-  - k - the number of image being viewed
-  - image - saving the image of interest
-  """
+                if success:
+                    predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                    predicted_color, processed_image = colour_recognition.colour(color)
 
-    if directory is not None:
-        # Make sure the directory exists
-        if not os.path.exists(directory):
-            os.makedirs(directory)
+                    _, _ = solution(counter, marker, predicted_character, predicted_color, save.save_dir)
 
-        # Form file name
-        filename = f"{directory}/{marker}_{k}{name}.png"
+                    if config.save_results:
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                        for value in range(5):
+                            image_name = f"{marker}_{name_of_results[value]}.jpg"
+                            image = name_of_results[value + 6]
+                            if image is not None:
+                                save.save_the_image(image_name, image)
 
-        # Form full path
-        filepath = os.path.join(Settings.script_dir, filename)
-
-        # Write file
-        cv2.imwrite(filepath, image)
+                    print("Detected and saved a target")
+        print(f"there is a total image count of {len(image_count)} and frames appended {len(cap)}")
 
 
-def edge_detection(frame, inner_switch):
+        # if config.testing == "detection":
+        #     if config.Distance_Test:
+        #         Characters = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
+        #                         'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+        #         for j in np.arange(0.5, 6.5, 0.5):
+        #             for i in range(0, len(Characters)):
+        #                 rel_path = "Test_Images/resolution/{0}/{1}/{2}_{1}_{0}.png".format(config.file_path,
+        #                     j, Characters[i])  # where is the image is located from where the config is current
+        #                 # located
+        #                 config.number = j # distance
+        #                 config.dictory = "resolution/{0}/{1}".format(config.file_path, j)
+        #                 config.switch = True
+        #                 abs_file_path = os.path.join(config.script_dir, rel_path)  # attaching the location
+        #                 test_image = cv2.imread(abs_file_path)  # reading in the image
+        #                 marker = (os.path.basename(rel_path))
+        #                 config.alphanumeric_character = (Characters[i])
+        #                 color, roi, frame, success = detection(test_image)
+        #                 solution(counter + 1, marker, distance)
+        #     else:
+        #         color, roi, frame, success = detection(test_image)
+        #         predicted_character, contour_image, chosen_image = character_recognition.character(color)
+        #         predicted_color, processed_image = colour_recognition.colour(color)
+        #         _, _ = solution(counter, marker, predicted_character, predicted_color)
+
+        # elif config.testing == "detection_only":
+        #     color, roi, frame, success = detection(test_image)
+
+        # elif config.testing == "character":
+        #     predicted_character, _, _ = character_recognition.character(img)
+        #     print(str(predicted_character))
+
+        # elif config.testing == "colour":
+        #     predicted_color, processed_image = colour_recognition.colour(img)
+        #     print(str(predicted_color))
+
+
+def edge_detection(frame, inner_switch, config):
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # converts to gray
     if inner_switch == 1:
         blurred_inner = cv2.GaussianBlur(gray, (3, 3), 0)  # blur the gray image for better edge detection
         edged_inner = cv2.Canny(blurred_inner, 5, 5)  # the lower the value the more detailed it would be
         edged = edged_inner
-        if Settings.Step_camera:
+        if config.Step_camera:
             cv2.imshow('edge_inner', edged_inner)
             cv2.imshow("blurred_inner", blurred_inner)
-            cv2.waitKey(0)
+
     else:
         blurred_outer = cv2.GaussianBlur(gray, (5, 5), 0)  # blur the gray image for better edge detection
         edged_outer = cv2.Canny(blurred_outer, 14, 10)  # the lower the value the more detailed it would be
         edged = edged_outer
-        if Settings.Step_camera:
+        if config.Step_camera:
             cv2.imshow('edge_outer', edged_outer)
             cv2.imshow("blurred_outer", blurred_outer)
             # cv2.waitKey(0)
@@ -328,14 +350,14 @@ def edge_detection(frame, inner_switch):
     return edged_copy
 
 
-def locating_square(contours, edged_copy):
+def locating_square(contours, edged_copy, config):
     # outer square
     for c in contours:
         peri = cv2.arcLength(c, True)  # grabs the contours of each points to complete a shape
         # get the approx. points of the actual edges of the corners
         approx = cv2.approxPolyDP(c, 0.01 * peri, True)
         cv2.drawContours(edged_copy, [approx], -1, (255, 0, 0), 3)
-        if Settings.Step_detection:
+        if config.Step_detection:
             cv2.imshow("contours_approx", edged_copy)
 
         if 4 <= len(approx) <= 6:

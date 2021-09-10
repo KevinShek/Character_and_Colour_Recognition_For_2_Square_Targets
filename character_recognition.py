@@ -11,16 +11,6 @@ from config import Settings
 Recognise a white character from an saved image through the method of KNN or tesseract
 """
 
-# to initialise tesseract
-if Settings.device_for_tesseract == "pc":
-    pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
-    TESSDATA_PREFIX = r"C:\Program Files\Tesseract-OCR"
-elif Settings.device_for_tesseract == "pi":
-    TESSDATA_PREFIX = r"\usr\share\tesseract-ocr"
-
-# Load Character Contour Area
-MIN_CONTOUR_AREA = 100
-
 class ContourWithData:
     # member variables ############################################################################
     npaContour = None  # contour
@@ -47,80 +37,71 @@ class ContourWithData:
     # this is oversimplified, for a production grade program, checks if the contour would fall in range of the
     # contour area and any smaller or bigger is treated as noises and ignored
     def contour_valid(self, height, width):
+        MIN_CONTOUR_AREA = 100
         MAX_CONTOUR_AREA = height * width * 0.9
         return MIN_CONTOUR_AREA < self.fltArea < MAX_CONTOUR_AREA
 
 
-def character(counter, marker, distance):
+def character(img):
+    config = Settings()
     print('Starting recognition thread')
+
+    # to initialise tesseract
+    if config.device_for_tesseract == "pc":
+        pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+        TESSDATA_PREFIX = r"C:\Program Files\Tesseract-OCR"
+    elif config.device_for_tesseract == "pi":
+        TESSDATA_PREFIX = r"\usr\share\tesseract-ocr"
 
     # initialising variables
     guesses = [0] * 35  # create a list of 35 characters
     text = [] * 7  # create a list of 7 images
     character_prediction = None
-    directory = None
+    npaROIResized = None
 
-    for i in range(1, counter):
-        if Settings.character_test:
-            img = Settings.test_image
-        else:
-            img = cv2.imread("colour%d.png" % i)
+    # if Step_letter:
+    #   plt.hist(gauss.ravel(), bins=256, range=[0.0, 256.0], fc='k', ec='k')  # calculating histogram
+    #   plt.show()
 
-        # if Step_letter:
-        #   plt.hist(gauss.ravel(), bins=256, range=[0.0, 256.0], fc='k', ec='k')  # calculating histogram
-        #   plt.show()
+    # make a copy of the thresh image, this in necessary b/c findContours modifies the image
+    img_thresh_copy = pre_processing(img, config).copy()
 
-        # make a copy of the thresh image, this in necessary b/c findContours modifies the image
-        img_thresh_copy = pre_processing(img).copy()
+    if config.character == "knn":
+        npaROIResized = area_of_region_of_interest(img_thresh_copy, config)
 
-        if Settings.Save_Data:
-            directory = "threshold"
-        elif Settings.Static_Test:
-            directory = "{0}".format(distance)
-        elif Settings.Rover_Marker:
-            directory = "marker={0}".format(marker)
-        elif Settings.Distance_Test:
-            directory = "{0}".format(Settings.dictory)
+        knn = cv2.ml.KNearest_create()  # initialise the knn
+        # joins the train data with the train_labels
+        knn.train(config.npaFlattenedImages, cv2.ml.ROW_SAMPLE, config.Classifications)
 
-        if Settings.save_results:
-            write_to_file(directory, marker, i, "contour", img_thresh_copy)
+        # looks for the 3 nearest neighbours comparing to the flatten images (k = neighbours)
+        retval, npaResults, neigh_resp, dists = knn.findNearest(npaROIResized, k=config.knn_value)
 
-        if Settings.character == "knn":
-            npaROIResized = area_of_region_of_interest(img_thresh_copy, distance, marker, i)
+        # current guess
+        currGuess = int(npaResults[0][0])
+        if config.Step_letter:
+            print(currGuess)
+        # Transform guess in ASCII format into range 0-35
+        if 49 <= currGuess <= 57:
+            guesses[currGuess - 49] += 1
+        elif 65 <= currGuess <= 90:
+            guesses[currGuess - 56] += 1
 
-            knn = cv2.ml.KNearest_create()  # initialise the knn
-            # joins the train data with the train_labels
-            knn.train(Settings.npaFlattenedImages, cv2.ml.ROW_SAMPLE, Settings.Classifications)
+    elif config.character == "tesseract":
+        # configuration setting to convert image to string.
+        configuration = "-l eng --oem 3 --psm 10"
 
-            # looks for the 3 nearest neighbours comparing to the flatten images (k = neighbours)
-            retval, npaResults, neigh_resp, dists = knn.findNearest(npaROIResized, k=Settings.knn_value)
+        # This will recognize the text from the image of bounding box
+        charactername = pytesseract.image_to_string(img_thresh_copy, config=configuration)
 
-            # current guess
-            currGuess = int(npaResults[0][0])
-            if Settings.Step_letter:
-                print(currGuess)
-            # Transform guess in ASCII format into range 0-35
-            if 49 <= currGuess <= 57:
-                guesses[currGuess - 49] += 1
-            elif 65 <= currGuess <= 90:
-                guesses[currGuess - 56] += 1
+        text.append(charactername[:-2])
 
-        elif Settings.character == "tesseract":
-            # configuration setting to convert image to string.
-            configuration = "-l eng --oem 3 --psm 10"
+    else:
+        print("please chose between one of the preprocess method of 'knn' or 'tesseract'.")
 
-            # This will recognize the text from the image of bounding box
-            charactername = pytesseract.image_to_string(img_thresh_copy, config=configuration)
-
-            text.append(charactername[:-2])
-
-        else:
-            print("please chose between one of the preprocess method of 'knn' or 'tesseract'.")
-
-    if Settings.character == "knn":
+    if config.character == "knn":
         # find mode of character guess
         # Initialise mode and prev variables for first loop through
-        if Settings.Step_letter:
+        if config.Step_letter:
             print(guesses)
         mode = 0
         prev = guesses[0]
@@ -137,10 +118,10 @@ def character(counter, marker, distance):
 
         character_prediction = chr(mode)
 
-    elif Settings.character == "tesseract":
+    elif config.character == "tesseract":
         mode = Counter(text)
 
-        if Settings.Step_letter:
+        if config.Step_letter:
             print(mode)
 
         if mode == Counter():
@@ -148,7 +129,7 @@ def character(counter, marker, distance):
         else:
             character_prediction = mode.most_common(1)[0][0]
 
-    return character_prediction
+    return character_prediction, img_thresh_copy, npaROIResized
 
 
 def remove_inner_overlapping_chars(list_of_matching_chars):
@@ -192,30 +173,7 @@ def distance_between_chars(first_char, second_char):
     return math.sqrt((intX ** 2) + (intY ** 2))
 
 
-def write_to_file(directory, marker, k, name, image):
-    """
-  For writing an image file to the specified directory with standardised file name format
-  - directory - folder to save file
-  - marker - the target number
-  - k - the number of image being viewed
-  - image - saving the image of interest
-  """
-    if directory is not None:
-        # Make sure the directory exists
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-
-        # Form file name
-        filename = f"{directory}/{marker}_{k}{name}.png"
-
-        # Form full path
-        filepath = os.path.join(Settings.script_dir, filename)
-
-        # Write file
-        cv2.imwrite(filepath, image)
-
-
-def pre_processing(img):
+def pre_processing(img, config):
     """
     The pre-processing of the image before it is feed to locating the character or directly to the recognition method
     """
@@ -227,7 +185,11 @@ def pre_processing(img):
     roi = img[int((height / 2) - (height / 2) * 0.85):int((height / 2) + (height / 2) * 0.85), int((width / 2) - (width
             / 2) * 0.85):int((width / 2) + (width / 2) * 0.85)]
 
-    resize = cv2.resize(roi, (Settings.resize_height, Settings.resize_width), interpolation=cv2.INTER_AREA)
+    # the following resize height and width are used for the resizing of the images before pre-processing occurs
+    resize_height = 100
+    resize_width = 100
+
+    resize = cv2.resize(roi, (resize_height, resize_width), interpolation=cv2.INTER_AREA)
 
     # Convert the image to grayscale and turn to outline of the letter
     gray = cv2.cvtColor(resize, cv2.COLOR_BGR2GRAY)
@@ -238,7 +200,7 @@ def pre_processing(img):
     #   plt.hist(gauss.ravel(), bins=256, range=[0.0, 256.0], fc='k', ec='k')  # calculating histogram
     #   plt.show()
 
-    if Settings.Step_letter:
+    if config.Step_letter:
         cv2.imshow("image", img)
         cv2.imshow("resize", resize)
         cv2.imshow("gray", gray)
@@ -249,24 +211,24 @@ def pre_processing(img):
     # initialising variable
     preprocessedimage = None
 
-    if Settings.preprocess_character == "otsu":
-        if Settings.character == "tesseract":
+    if config.preprocess_character == "otsu":
+        if config.character == "tesseract":
             _, otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
-            if Settings.Step_letter:
+            if config.Step_letter:
                 cv2.imshow("otsu", otsu)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
             preprocessedimage = otsu
         else:
             _, otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            if Settings.Step_letter:
+            if config.Step_letter:
                 cv2.imshow("otsu", otsu)
                 cv2.waitKey(0)
                 cv2.destroyAllWindows()
             preprocessedimage = otsu
 
-    elif Settings.preprocess_character == "custom":
-        if Settings.character == "tesseract":
+    elif config.preprocess_character == "custom":
+        if config.character == "tesseract":
             kernel = np.ones((4, 4), np.uint8)
             edged = cv2.Canny(gauss, 10, 30)  # the lower the value the more detailed it would be
             dilate = cv2.dilate(edged, kernel, iterations=1)
@@ -301,7 +263,7 @@ def pre_processing(img):
             denoised = cv2.fastNlMeansDenoising(erode, None, 10, 7, 21)
             thresh = denoised
 
-        if Settings.Step_letter:
+        if config.Step_letter:
             cv2.imshow("edge", edged)
             cv2.imshow("dilate", dilate)
             cv2.imshow("open", opening)
@@ -320,7 +282,7 @@ def pre_processing(img):
     return preprocessedimage
 
 
-def area_of_region_of_interest(img_thresh_copy, distance, marker, i):
+def area_of_region_of_interest(img_thresh_copy, config):
     # set heights and width to be able to read the image when comparing to flatten images
     h = 30
     w = 30
@@ -338,7 +300,7 @@ def area_of_region_of_interest(img_thresh_copy, distance, marker, i):
                                         cv2.CHAIN_APPROX_SIMPLE)  # compress horizontal, vertical, and diagonal
     # segments and leave only their end points
 
-    if Settings.Step_letter:
+    if config.Step_letter:
         cv2.imshow("npaContours", img_thresh_copy)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
@@ -379,24 +341,12 @@ def area_of_region_of_interest(img_thresh_copy, distance, marker, i):
         # resize image, this will be more consistent for recognition and storage
         imgROIResized = cv2.resize(imgROI, (w, h))
 
-        if Settings.Save_Data:
-            directory = "threshold"
-        elif Settings.Static_Test:
-            directory = "{0}".format(distance)
-        elif Settings.Rover_Marker:
-            directory = "marker={0}".format(marker)
-        elif Settings.Distance_Test:
-            directory = "{0}".format(Settings.dictory)
-
-        if Settings.save_results:
-            write_to_file(directory, marker, i, "chosen", imgROIResized)
-
         npaROIResized = imgROIResized.reshape((1, w * h))  # flatten image into 1d numpy array
 
         npaROIResized = np.float32(
             npaROIResized)  # convert from 1d numpy array of ints to 1d numpy array of floats
 
-        if Settings.Step_letter:
+        if config.Step_letter:
             cv2.imshow("resize", imgROIResized)
             # cv2.imshow("imgTestingNumbers", img) # show input image with green boxes drawn around found digits
             cv2.waitKey(0)
