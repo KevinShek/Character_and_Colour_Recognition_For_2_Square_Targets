@@ -222,7 +222,7 @@ def capture_setting():
                 end = time.time()
 
                 color, roi, frame, success = detection(frame, config)
-
+                cap.truncate(0)
                 if success:
                     counter = counter + 1
 
@@ -257,7 +257,6 @@ def capture_setting():
                 predicted_character_list = []
                 predicted_color_list = []
 
-        cap.truncate(0)
     elif config.capture == "image":
         cap = [] # to store the names of the images
         data_dir = Path(config.media)
