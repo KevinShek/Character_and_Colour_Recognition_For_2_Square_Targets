@@ -1,0 +1,16 @@
+# pip install -qr requirements.txt
+
+# base ----------------------------------------
+numpy>=1.18.5
+opencv-python>=4.1.2
+# if opencv-python is causing you trouble use the following commented commands in the command line/ Terminal
+# sudo apt update
+# sudo apt-get install libatlas-base-dev libjasper-dev
+webcolors
+pytesseract
+# if pytesseract doesn't work use the following commented commands in the command line / Terminal
+# sudo apt update
+# sudo apt install tesseract-ocr libtesseract-dev
+
+# For the Pi ----------------------------------
+# picamera
