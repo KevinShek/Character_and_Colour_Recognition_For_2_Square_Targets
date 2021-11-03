@@ -10,11 +10,11 @@ It contained a few test images for you to understand how it works and it can wor
 # How-to-use
 
 Within this code, majority of the controls could be changed within the file called **config.py** which contains operations such as: 
-<li>Switching between K-NN and Tesseract or using RGB or HSV. </li>
-<li>Visual of the important stages you that wish to enable and see. </li>
-<li>Testing the system either by video or an image.</li>
-<li>Testing the system for specific operation such as character or colour recognition.</li>
-<li>It also contains the settings for what device you are using the scripts for either a raspberry pi or PC.</li>
+  <li>Switching between K-NN and Tesseract or using RGB or HSV. </li>
+  <li>Visual of the important stages you that wish to enable and see. </li>
+  <li>Testing the system either by video or an image.</li>
+  <li>Testing the system for specific operation such as character or colour recognition.</li>
+  <li>It also contains the settings for what device you are using the scripts for either a raspberry pi or PC.</li>
 
 However, if you wish to finetune the scripts, they are seperated to their task that they are focused on. 
 You can find the target detection inside the **main.py**.
@@ -22,18 +22,18 @@ You can find the target detection inside the **main.py**.
 To run the code type into the command line / Terminal the following command: ```python -m main.py```
 
 # Issue
-- It is only able to detect the a single square target per frame/image.
+  <li>It is only able to detect the a single square target per frame/image.</li>
 
 # Dependency
 You can use the requirement.txt for an ease of installing the following python packages.
 
-<li>opencv-python</li>
-<li>numpy</li>
-<li>webcolors</li>
-<li>pytesseract</li>
+  <li>opencv-python</li>
+  <li>numpy</li>
+  <li>webcolors</li>
+  <li>pytesseract</li>
 
 if using on the raspberry pi, you need:
-<li>picamera</li>
+  <li>picamera</li>
 
 
 
