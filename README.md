@@ -5,21 +5,28 @@ This repository contains the scripts for the following tasks: character and colo
 
 <img src="Test_Images/L_georgia_fuchsia.png" alt="L" width="100">
 
-Within this file majority of the controls could be changed within the file called config.py which contains operations such as: 
-<li>Switching between which K-NN and Tesseract or using RGB or HSV. </li>
+It contained a few test images for you to understand how it works and it can work with your webcam as well as long you have adjusted the settings in the **config.py**
+
+# How-to-use
+
+Within this code, majority of the controls could be changed within the file called **config.py** which contains operations such as: 
+<li>Switching between K-NN and Tesseract or using RGB or HSV. </li>
 <li>Visual of the important stages you that wish to enable and see. </li>
 <li>Testing the system either by video or an image.</li>
 <li>Testing the system for specific operation such as character or colour recognition.</li>
-<li>It also contains the settings for what device you are using the scripts for either for a raspberry pi or PC.</li>
+<li>It also contains the settings for what device you are using the scripts for either a raspberry pi or PC.</li>
 
-However, if you wish to fine tune the scripts, they are seperated to their task that they are focused on. You can find the target detection inside the Main.py.
+However, if you wish to finetune the scripts, they are seperated to their task that they are focused on. 
+You can find the target detection inside the **main.py**.
 
-To run the script type ```python -m Main.py```
+To run the code type into the command line / Terminal the following command: ```python -m main.py```
 
 # Issue
-- It is only able to detect the first square target within the frame.
+- It is only able to detect the a single square target per frame/image.
 
 # Dependency
+You can use the requirement.txt for an ease of installing the following python packages.
+
 <li>opencv-python</li>
 <li>numpy</li>
 <li>webcolors</li>
