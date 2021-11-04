@@ -26,6 +26,7 @@ def solution(counter, marker, predicted_character, predicted_color, result_dir):
     print(predicted_color + " is the colour of ground marker", marker)
 
     counter = 1
+    marker += 1
 
     return marker, counter
 
@@ -182,11 +183,12 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
+                        image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
-                            image_name = f"{marker}_{data[value]}.jpg"
-                            image = data[value + 3]
-                            if image is None:
+                            image_name = f"{marker}_{data}.jpg"
+                            image = image_results[value]
+                            if image is not None:
                                 save.save_the_image(image_name, image)
 
                 if counter == 8:
@@ -222,7 +224,7 @@ def capture_setting():
                 end = time.time()
 
                 color, roi, frame, success = detection(frame, config)
-                cap.truncate(0)
+                
                 if success:
                     counter = counter + 1
 
@@ -236,11 +238,12 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
+                        image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
-                            image_name = f"{marker}_{data[value]}.jpg"
-                            image = data[value + 3]
-                            if image is None:
+                            image_name = f"{marker}_{data}.jpg"
+                            image = image_results[value]
+                            if image is not None:
                                 save.save_the_image(image_name, image)
 
                 if counter == 8:
@@ -256,7 +259,8 @@ def capture_setting():
                 marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)
                 predicted_character_list = []
                 predicted_color_list = []
-
+            cap.truncate(0)
+                
     elif config.capture == "image":
         cap = [] # to store the names of the images
         data_dir = Path(config.media)
