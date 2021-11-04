@@ -1,7 +1,5 @@
-requirements.txt
 .idea
 __pycache__
-*.png
 *.mp4
 color
 results
@@ -10,4 +8,4 @@ threshold
 TimeTest.py
 *.xlsx
 venv
-result_dir/exp
+result_dir
