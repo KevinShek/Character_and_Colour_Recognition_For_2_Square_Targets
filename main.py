@@ -159,7 +159,7 @@ def capture_setting():
             if counter == 1:
                 if config.pause:
                     distance = input("Are you Ready?")
-            if counter == 1 or end - start < 5:
+            if counter == 1 or end - start < 10:
                 end = time.time()
                 ret, frame = cap.read()
                 if config.Step_camera:
@@ -186,7 +186,7 @@ def capture_setting():
                         name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
                         image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
-                            image_name = f"{marker}_{data}.jpg"
+                            image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
                             if image is not None:
                                 save.save_the_image(image_name, image)
@@ -219,7 +219,7 @@ def capture_setting():
 
         for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
             #  to start the progress of capture and don't stop unless the counter increases and has surpass 5 seconds
-            if counter == 1 or end - start < 5:
+            if counter == 1 or end - start < 10:
                 frame = image.array
                 end = time.time()
 
@@ -241,7 +241,7 @@ def capture_setting():
                         name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
                         image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
-                            image_name = f"{marker}_{data}.jpg"
+                            image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
                             if image is not None:
                                 save.save_the_image(image_name, image)
