@@ -102,12 +102,15 @@ def detection(frame, config):
                 print("Detection failed to locate the inner square")
             return _, _, _, False
         color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
+        print("detected a square target")
 
     elif config.square == 3:
         color = img_cropped[int((h / 2) - (h / 4)):int((h / 2) + (h / 4)), int((w / 2) - (w / 4)):int((w / 2) + (w / 4))]
+        print("detected a square target")
 
     elif config.square == 1:
         color = img_cropped
+        print("detected a square target")
 
     if config.Step_detection:
         cv2.imshow("rotated image", img_cropped)
@@ -184,7 +187,7 @@ def capture_setting():
 
                     if config.save_results:
                         name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                        image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -192,6 +195,7 @@ def capture_setting():
                                 save.save_the_image(image_name, image)
 
                 if counter == 8:
+                    print("Starting Recognition Thread")
                     common_character = Counter(predicted_character_list).most_common(1)[0][0]
                     common_color = Counter(predicted_color_list).most_common(1)[0][0]
                     solution(counter, marker, common_character, common_color, save.save_dir)
@@ -199,6 +203,7 @@ def capture_setting():
                     predicted_color_list = []
 
             else:
+                print("Starting Recognition Thread")
                 common_character = Counter(predicted_character_list).most_common(1)[0][0]
                 common_color = Counter(predicted_color_list).most_common(1)[0][0]
                 solution(counter, marker, common_character, common_color, save.save_dir)
@@ -239,7 +244,7 @@ def capture_setting():
 
                     if config.save_results:
                         name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                        image_results - [color, roi, frame, contour_image, processed_image, chosen_image]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -247,6 +252,7 @@ def capture_setting():
                                 save.save_the_image(image_name, image)
 
                 if counter == 8:
+                    print("Starting Recognition Thread")
                     common_character = Counter(predicted_character_list).most_common(1)[0][0]
                     common_color = Counter(predicted_color_list).most_common(1)[0][0]
                     marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)
@@ -254,6 +260,7 @@ def capture_setting():
                     predicted_color_list = []
 
             else:
+                print("Starting Recognition Thread")
                 common_character = Counter(predicted_character_list).most_common(1)[0][0]
                 common_color = Counter(predicted_color_list).most_common(1)[0][0]
                 marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)

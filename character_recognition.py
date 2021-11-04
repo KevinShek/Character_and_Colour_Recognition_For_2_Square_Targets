@@ -44,7 +44,6 @@ class ContourWithData:
 
 def character(img):
     config = Settings()
-    print('Starting recognition thread')
 
     # to initialise tesseract
     if config.device_for_tesseract == "pc":
