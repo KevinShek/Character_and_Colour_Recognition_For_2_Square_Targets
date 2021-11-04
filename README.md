@@ -13,7 +13,6 @@ Within this code, majority of the controls could be changed within the file call
   <li>Switching between K-NN and Tesseract or using RGB or HSV. </li>
   <li>Visual of the important stages you that wish to enable and see. </li>
   <li>Testing the system either by video or an image.</li>
-  <li>Testing the system for specific operation such as character or colour recognition.</li>
   <li>It also contains the settings for what device you are using the scripts for either a raspberry pi or PC.</li>
 
 However, if you wish to finetune the scripts, they are seperated to their task that they are focused on. 
