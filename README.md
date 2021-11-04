@@ -3,7 +3,7 @@ The motavation for this project was aimed to tackle the competition that was set
 
 This repository contains the scripts for the following tasks: character and colour recognition and also target detection. The target this script is tailored for is a square target that contains another square which contains a colour and an alphanumeric character that is white. as shown below:
 
-<img src="Test_Images/L_georgia_fuchsia.png" alt="L" width="100">
+<img src="test_images/L_georgia_fuchsia.png" alt="L" width="100">
 
 It contained a few test images for you to understand how it works and it can work with your webcam as well as long you have adjusted the settings in the **config.py**
 
