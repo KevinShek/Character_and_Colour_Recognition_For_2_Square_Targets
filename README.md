@@ -18,7 +18,7 @@ Within this code, majority of the controls could be changed within the file call
 However, if you wish to finetune the scripts, they are seperated to their task that they are focused on. 
 You can find the target detection inside the **main.py**.
 
-To run the code type into the command line / Terminal the following command: ```python -m main.py```
+To run the code type into the command line / Terminal the following command: ```python main.py```
 
 # Issue
   <li>It is only able to detect the a single square target per frame/image.</li>
