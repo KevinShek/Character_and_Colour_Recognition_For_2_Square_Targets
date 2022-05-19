@@ -79,10 +79,10 @@ def capture_setting():
             cap = cv2.VideoCapture(config.media)
         else:
             cap = cv2.VideoCapture(0)
-            cap.set(cv2.CAP_PROP_FRAME_WIDTH, 960)  # 800 default
-            cap.set(3, 960)  # 800 default
-            cap.set(4, 540)  # 800 default
-            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 540)
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.width)  # 800 default
+            cap.set(3, config.width)  # 800 default
+            cap.set(4, config.height)  # 800 default
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, config.height)
             cap.set(cv2.CAP_PROP_FPS, 60)
 
             time.sleep(2)  # allows the camera to start-up
@@ -144,12 +144,12 @@ def capture_setting():
         from picamera import PiCamera
 
         camera = PiCamera()
-        camera.resolution = (1280, 720)
+        camera.resolution = (config.width, config.height)
         camera.brightness = 50  # 50 is default
         camera.framerate = 90
         camera.awb_mode = 'auto'
         camera.shutter_speed = camera.exposure_speed
-        cap = PiRGBArray(camera, size=(1280, 720))
+        cap = PiRGBArray(camera, size=(config.width, config.height))
 
         for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
             #  to start the progress of capture and don't stop unless the counter increases and has surpass 5 seconds

@@ -7,9 +7,9 @@ class Settings:
     def __init__(self):
         # The steps of the programs
         self.Step_camera = False  # stages of camera activating
-        self.Step_letter = False  # view the stages of character recognition
+        self.Step_letter = True  # view the stages of character recognition
         self.Step_color = False  # view the stages of colour recognition
-        self.Step_detection = False  # stages of detection
+        self.Step_detection = True  # stages of detection
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
@@ -17,10 +17,11 @@ class Settings:
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/static_test/phone_camera"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../frames/phone_camera"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
+        
         # capture
         # detection and recognition
         self.testing = "static_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
@@ -28,13 +29,17 @@ class Settings:
 
         # Methods
         self.device_for_tesseract = "linux" # (windows/linux)
-        self.character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+        self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
         self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
         # there is "otsu" or "custom"
-        self.colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+        self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
+
+        # camera setting
+        self.width = 1280
+        self.height = 720
 
         # There is 3 option 1, 2, 3. 1 is for the inner square only, 2 is for detecting the outer and inner square,
         # then 3 is detecting the outer square and force cropping to retrieve the inner square.
