@@ -9,3 +9,5 @@ TimeTest.py
 *.xlsx
 venv
 result_dir
+Pipfile
+pipfile.lock
