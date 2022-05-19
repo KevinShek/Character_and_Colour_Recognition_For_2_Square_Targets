@@ -10,6 +10,7 @@ import itertools
 from config import Settings
 from saving import Saving
 from collections import Counter
+from detection import detection
 
 """
 The following code contains the detection of the square target and saves only the inner square data
@@ -31,106 +32,34 @@ def solution(counter, marker, predicted_character, predicted_color, result_dir):
     return marker, counter
 
 
-def detection(frame, config):
-    # Initialising variable
-    inner_switch = 0
-
-    # if config.Distance_Test:
-    #     height, width, _ = frame.shape
-    #     if float(config.number) <= 1.0:
-    #         frame = frame
-    #     elif float(config.number) <= 2.0:
-    #         frame = frame[int(height/4):int(3*height/4), int(width/4):int(3*width/4)]
-    #     else:
-    #         frame = frame[int(height / 3):int(3 * height / 4), int(width / 3):int(3 * width / 4)]
-
-    edged_copy = edge_detection(frame, inner_switch, config)
-
-    # find contours in the threshold image and initialize the
-    (contours, _) = cv2.findContours(edged_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
-
-    try:
-        x, y, w, h, approx, cnt = locating_square(contours, edged_copy, config)
-    except TypeError:
-        return _, _, _, False
-
-    if config.Step_camera:
-        rect = cv2.minAreaRect(cnt)
-        box = cv2.boxPoints(rect)
-        box = np.int0(box)
-        cv2.drawContours(frame, [box], 0, (0, 0, 255), 2)
-        cv2.imshow("frame", frame)
-
-    roi = frame[y:y + h, x:x + w]
-
-    # Rotating the square to an upright position
-    height, width, numchannels = frame.shape
-
-    centre_region = (x + w / 2, y + h / 2)
-
-    # grabs the angle for rotation to make the square level
-    angle = cv2.minAreaRect(approx)[-1]  # -1 is the angle the rectangle is at
-
-    if 0 == angle:
-        angle = angle
-    elif -45 > angle > 90:
-        angle = -(90 + angle)
-    elif -45 > angle:
-        angle = 90 + angle
+def results_of_distance_test(filename, predicted_character, predicted_color, actual_character, actual_color, result_dir, resolution_used, internal_folder):
+    if predicted_character == actual_character:
+        correct_character = 1
     else:
-        angle = angle
+        correct_character = 0
+    if predicted_color == actual_color:
+        correct_colour = 1
+    else:
+        correct_colour = 0
 
-    rotated = cv2.getRotationMatrix2D(tuple(centre_region), angle, 1.0)
-    img_rotated = cv2.warpAffine(frame, rotated, (width, height))  # width and height was changed
-    img_cropped = cv2.getRectSubPix(img_rotated, (w, h), tuple(centre_region))
+    with open(f'{result_dir}/{resolution_used}_results.csv', 'a') as csvfile:  # for testing purposes
+        filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        filewriter.writerow([str(filename), str(predicted_character), str(actual_character), str(correct_character), str(predicted_color), str(actual_color), str(correct_colour)])
 
-    if config.square == 2:
-        inner_switch = 1
-        new_roi = img_cropped[int((h / 2) - (h / 3)):int((h / 2) + (h / 3)), int((w / 2) - (w / 3)):int((w / 2) + (w / 3))]
-        edge = edge_detection(new_roi, inner_switch, config)
-        (inner_contours, _) = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
 
-        if config.Step_detection:
-            cv2.imshow("inner_edge", edge)
-            cv2.imshow("testing", frame)
-            cv2.waitKey(0)
+def results_of_static_test(filename, predicted_character, predicted_color, actual_character, actual_color, result_dir, config):
+    if predicted_character == actual_character:
+        correct_character = 1
+    else:
+        correct_character = 0
+    if predicted_color == actual_color:
+        correct_colour = 1
+    else:
+        correct_colour = 0
 
-        try:
-            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edged_copy, config)
-        except TypeError:
-            if config.testing == "detection":
-                print("Detection failed to locate the inner square")
-            return _, _, _, False
-        color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
-        print("detected a square target")
-
-    elif config.square == 3:
-        color = img_cropped[int((h / 2) - (h / 4)):int((h / 2) + (h / 4)), int((w / 2) - (w / 4)):int((w / 2) + (w / 4))]
-        print("detected a square target")
-
-    elif config.square == 1:
-        color = img_cropped
-        print("detected a square target")
-
-    if config.Step_detection:
-        cv2.imshow("rotated image", img_cropped)
-        cv2.imshow("inner square", color)
-
-        new = cv2.rectangle(frame,  # draw rectangle on original testing image
-                            (x, y),
-                            # upper left corner
-                            (x + w,
-                             y + h),
-                            # lower right corner
-                            (0, 0, 255),  # green
-                            3)
-        cv2.imshow("frame block", new)
-
-    if config.Step_detection:
-        cv2.imshow("captured image", roi)
-        cv2.waitKey(0)
-
-    return color, roi, frame, True
+    with open(f'{result_dir}/{config.name_of_folder}_results.csv', 'a') as csvfile:  # for testing purposes
+        filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+        filewriter.writerow([str(filename), str(predicted_character), str(actual_character), str(correct_character), str(predicted_color), str(actual_color), str(correct_colour)])
 
 
 def capture_setting():
@@ -266,121 +195,247 @@ def capture_setting():
                 marker, counter = solution(counter, marker, common_character, common_color, save.save_dir)
                 predicted_character_list = []
                 predicted_color_list = []
+            # clear the stream in preparation for the next frame
             cap.truncate(0)
                 
     elif config.capture == "image":
-        cap = [] # to store the names of the images
-        data_dir = Path(config.media)
+        if config.testing == "none":
+            cap = [] # to store the names of the images
+            data_dir = Path(config.media)
 
-        # the following code interite over the extension that exist within a folder and place them into a single list
-        image_count = list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png')))
-        # image_count = len(list(data_dir.glob('*.jpg')))
-        for name in image_count:
+            # the following code interite over the extension that exist within a folder and place them into a single list
+            image_count = list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png')))
+            # image_count = len(list(data_dir.glob('*.jpg')))
+            for name in image_count:
+                    # head, tail = ntpath.split(name)
+                    filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
+                    cap.append(filename)
+                    test_image = cv2.imread(str(filename))
+                    marker = Path(name).stem # grabs the name with the extension
+
+                    color, roi, frame, success = detection(test_image, config)
+
+                    if success:
+                        predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                        predicted_color, processed_image = colour_recognition.colour(color)
+
+                        _, _ = solution(counter, marker, predicted_character, predicted_color, save.save_dir)
+
+                        if config.save_results:
+                            name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
+                            for value in range(5):
+                                image_name = f"{marker}_{name_of_results[value]}.jpg"
+                                image = name_of_results[value + 6]
+                                if image is not None:
+                                    save.save_the_image(image_name, image)
+
+                        print("Detected and saved a target")
+            print(f"there is a total image count of {len(image_count)} and frames appended {len(cap)}")
+
+        if config.testing == "distance_test":
+            data_dir = Path(config.media)
+            resolution_used = f"{config.media}".rsplit('/', 1)[-1] # grabbing the name of the folder name
+
+            with open(f'{save.save_dir}/{resolution_used}_results.csv', 'a') as csvfile:  # making the csv file
+                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                filewriter.writerow(["Filename" , "Predicted Character", "Actual Character", "Correct Character", "Predicted Colour", "Actual Colour", "Correct Colour"])
+            with open(f'{save.save_dir}/{resolution_used}_results_overall.csv', 'a') as csvfile:  # for testing purposes
+                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                filewriter.writerow(["Distance", "Correct Guess Character", "Correct Guess Character (%)", "Correct Guess Colour", "Correct Guess Colour (%)", "Detection Speed (ms)", "Character Recognition Speed (ms)", "Colour Recognition Speed (ms)", "Total Speed (ms)", f"Character Regnition Method ({config.character})", f"Colour Regnition Method ({config.colour})"])
+
+            list_of_internal_folders = sorted(os.listdir(data_dir)) # sorted into numerical order
+
+            for internal_folder in list_of_internal_folders:
+                cap = [] # to store the names of the images
+                correct_prediction_of_character, correct_prediction_of_colour= 0, 0
+                t0, t1, t2 = 0., 0., 0.
+                seen = 0
+
+                # making internal folders for each distances
+                Path(f"{save.save_dir}/{internal_folder}").mkdir(parents=True, exist_ok=True)
+
+                data_dir = Path(f"{config.media}/{internal_folder}") # path to the images where it is located
+                # the following code interite over the extension that exist within a folder and place them into a single list
+                image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
+                # image_count = len(list(data_dir.glob('*.jpg')))
+                for name in image_count:
+                    # head, tail = ntpath.split(name)
+                    filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
+                    cap.append(filename) # append the path of the images to the list
+                    name_of_image = filename.stem
+                    # print(name_of_image)
+                    actual_character = f"{name_of_image}".rsplit('_', 2)[0]
+
+                    if config.colour == "hsv":
+                        dict_of_colour_with_character = {'1': "gray", '2': "gray", '3': "black", '4': "black", '5': "cyan", '6': "cyan", '7': "gray", '8': "gray", '9': "yellow", 
+                        'A': "cyan", 'B': "red", 'C': "yellow-red", 'D': "blue cyan", 'E': "blue", 'F': "blue cyan", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "yellow", 
+                        'K': "yellow", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
+                        'T': "blue", 'U': "green", 'V': "red", 'W': "red", 'X': "yellow-red", 'Y': "blue", 'Z': "magenta"}
+                    elif config.colour == "rgb":
+                        dict_of_colour_with_character = {'1': "grey", '2': "grey", '3': "grey", '4': "grey", '5': "cyan", '6': "cyan", '7': "grey", '8': "grey", '9': "green", 
+                        'A': "cyan", 'B': "brown", 'C': "orange", 'D': "blue", 'E': "blue", 'F': "blue", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "green", 
+                        'K': "green", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
+                        'T': "blue", 'U': "green", 'V': "brown", 'W': "red", 'X': "orange", 'Y': "blue", 'Z': "magenta"}
+                    else:
+                        print("please choose hsv or rgb")
+                        break
+
+                    list_of_character = list(dict_of_colour_with_character.keys())
+                    list_of_colour = list(dict_of_colour_with_character.values())
+
+                    actual_colour = list_of_colour[list_of_character.index(str(actual_character))]
+
+                    test_image = cv2.imread(str(filename))
+
+                    t = time.time()
+                    color, roi, frame, success = detection(test_image, config)
+
+                    if success:
+                        t0 += time.time() - t
+                        t = time.time()
+                        predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                        t1 += time.time() - t
+                        t = time.time()
+                        predicted_color, processed_image = colour_recognition.colour(color)
+                        t2 += time.time() - t
+
+                        seen += 1
+    
+                        if predicted_character == actual_character:
+                            correct_prediction_of_character += 1
+                        if predicted_color == actual_colour:
+                            correct_prediction_of_colour += 1
+                        
+                        results_of_distance_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, resolution_used, internal_folder)
+                        
+                        if config.save_results:
+                            name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
+                            image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
+                            for value, data in enumerate(name_of_results):
+                                image_name = f"{internal_folder}/{name_of_image}_{data}.jpg"
+                                image = image_results[value]
+                                if image is not None:
+                                    save.save_the_image(image_name, image)
+
+                percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
+                percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100
+
+                if seen != 0: 
+                    speed = tuple(x / seen * 1E3 for x in (t0, t1, t2, t0 + t1 + t2))
+                else:
+                    speed = [0.0, 0.0, 0.0, 0.0]
+
+                with open(f'{save.save_dir}/{resolution_used}_results_overall.csv', 'a') as csvfile:  # for testing purposes
+                    filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                    filewriter.writerow([str(internal_folder), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
+
+                print(f"percentage_of_correct_character = {percentage_of_correct_character}")
+                print(f"percentage_of_correct_colour = {percentage_of_correct_colour}")
+
+            with open(f'{save.save_dir}/{resolution_used}_information.txt', 'a') as f:
+                f.write("Colour and Character Recognition for a 2 Square Target \n")
+                f.write(f"Resolution of the images = {resolution_used} \n")
+                f.write(f"method used for character recognition = {config.character} \n")
+                f.write(f"method used for colour recognition = {config.colour} \n")
+                f.write("\n")
+        
+        if config.testing == "static_test":
+            cap = [] # to store the names of the images
+            correct_prediction_of_character, correct_prediction_of_colour= 0, 0
+            t0, t1, t2 = 0., 0., 0.
+            seen = 0
+            data_dir = Path(config.media)
+
+            with open(f'{save.save_dir}/{config.name_of_folder}_results.csv', 'a') as csvfile:  # making the csv file
+                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                filewriter.writerow(["Filename" , "Predicted Character", "Actual Character", "Correct Character", "Predicted Colour", "Actual Colour", "Correct Colour"])
+            with open(f'{save.save_dir}/{config.name_of_folder}_results_overall.csv', 'a') as csvfile:  # for testing purposes
+                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                filewriter.writerow(["Distance", "Correct Guess Character", "Correct Guess Character (%)", "Correct Guess Colour", "Correct Guess Colour (%)", "Detection Speed (ms)", "Character Recognition Speed (ms)", "Colour Recognition Speed (ms)", "Total Speed (ms)", f"Character Regnition Method ({config.character})", f"Colour Regnition Method ({config.colour})"])
+
+            # the following code interite over the extension that exist within a folder and place them into a single list
+            image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
+            # image_count = len(list(data_dir.glob('*.jpg')))
+            for name in image_count:
                 # head, tail = ntpath.split(name)
                 filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
-                cap.append(filename)
-                test_image = cv2.imread(str(filename))
-                marker = Path(name).stem # grabs the name with the extension
+                cap.append(filename) # append the path of the images to the list
+                name_of_image = filename.stem
+                # print(name_of_image)
+                actual_character = f"{name_of_image}".rsplit('_', 1)[0]
 
+                if config.colour == "hsv":
+                    dict_of_colour_with_character = {'1': "gray", '2': "gray", '3': "black", '4': "black", '5': "cyan", '6': "cyan", '7': "gray", '8': "gray", '9': "yellow", 
+                    'A': "cyan", 'B': "red", 'C': "yellow-red", 'D': "blue cyan", 'E': "blue", 'F': "blue cyan", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "yellow", 
+                    'K': "yellow", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
+                    'T': "blue", 'U': "green", 'V': "red", 'W': "red", 'X': "yellow-red", 'Y': "blue", 'Z': "magenta"}
+                elif config.colour == "rgb":
+                    dict_of_colour_with_character = {'1': "grey", '2': "grey", '3': "grey", '4': "grey", '5': "cyan", '6': "cyan", '7': "grey", '8': "grey", '9': "green", 
+                    'A': "cyan", 'B': "brown", 'C': "orange", 'D': "blue", 'E': "blue", 'F': "blue", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "green", 
+                    'K': "green", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
+                    'T': "blue", 'U': "green", 'V': "brown", 'W': "red", 'X': "orange", 'Y': "blue", 'Z': "magenta"}
+                else:
+                    print("please choose hsv or rgb")
+                    break
+
+                list_of_character = list(dict_of_colour_with_character.keys())
+                list_of_colour = list(dict_of_colour_with_character.values())
+
+                actual_colour = list_of_colour[list_of_character.index(str(actual_character))]
+
+                test_image = cv2.imread(str(filename))
+
+                t = time.time()
                 color, roi, frame, success = detection(test_image, config)
 
                 if success:
+                    t0 += time.time() - t
+                    t = time.time()
                     predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                    t1 += time.time() - t
+                    t = time.time()
                     predicted_color, processed_image = colour_recognition.colour(color)
+                    t2 += time.time() - t
 
-                    _, _ = solution(counter, marker, predicted_character, predicted_color, save.save_dir)
+                    seen += 1
 
+                    if predicted_character == actual_character:
+                        correct_prediction_of_character += 1
+                    if predicted_color == actual_colour:
+                        correct_prediction_of_colour += 1
+                    
+                    results_of_static_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
+                    
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
-                        for value in range(5):
-                            image_name = f"{marker}_{name_of_results[value]}.jpg"
-                            image = name_of_results[value + 6]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
+                        for value, data in enumerate(name_of_results):
+                            image_name = f"{name_of_image}_{data}.jpg"
+                            image = image_results[value]
                             if image is not None:
                                 save.save_the_image(image_name, image)
 
-                    print("Detected and saved a target")
-        print(f"there is a total image count of {len(image_count)} and frames appended {len(cap)}")
+            percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
+            percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100
 
+            if seen != 0: 
+                speed = tuple(x / seen * 1E3 for x in (t0, t1, t2, t0 + t1 + t2))
+            else:
+                speed = [0.0, 0.0, 0.0, 0.0]
 
-        # if config.testing == "detection":
-        #     if config.Distance_Test:
-        #         Characters = ['1', '2', '3', '4', '5', '6', '7', '8', '9', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I',
-        #                         'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
-        #         for j in np.arange(0.5, 6.5, 0.5):
-        #             for i in range(0, len(Characters)):
-        #                 rel_path = "Test_Images/resolution/{0}/{1}/{2}_{1}_{0}.png".format(config.file_path,
-        #                     j, Characters[i])  # where is the image is located from where the config is current
-        #                 # located
-        #                 config.number = j # distance
-        #                 config.dictory = "resolution/{0}/{1}".format(config.file_path, j)
-        #                 config.switch = True
-        #                 abs_file_path = os.path.join(config.script_dir, rel_path)  # attaching the location
-        #                 test_image = cv2.imread(abs_file_path)  # reading in the image
-        #                 marker = (os.path.basename(rel_path))
-        #                 config.alphanumeric_character = (Characters[i])
-        #                 color, roi, frame, success = detection(test_image)
-        #                 solution(counter + 1, marker, distance)
-        #     else:
-        #         color, roi, frame, success = detection(test_image)
-        #         predicted_character, contour_image, chosen_image = character_recognition.character(color)
-        #         predicted_color, processed_image = colour_recognition.colour(color)
-        #         _, _ = solution(counter, marker, predicted_character, predicted_color)
+            with open(f'{save.save_dir}/{config.name_of_folder}_results_overall.csv', 'a') as csvfile:  # for testing purposes
+                filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                filewriter.writerow([str(Path(config.media).stem), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
 
-        # elif config.testing == "detection_only":
-        #     color, roi, frame, success = detection(test_image)
+            print(f"percentage_of_correct_character = {percentage_of_correct_character}")
+            print(f"percentage_of_correct_colour = {percentage_of_correct_colour}")
 
-        # elif config.testing == "character":
-        #     predicted_character, _, _ = character_recognition.character(img)
-        #     print(str(predicted_character))
-
-        # elif config.testing == "colour":
-        #     predicted_color, processed_image = colour_recognition.colour(img)
-        #     print(str(predicted_color))
-
-
-def edge_detection(frame, inner_switch, config):
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)  # converts to gray
-    if inner_switch == 1:
-        blurred_inner = cv2.GaussianBlur(gray, (3, 3), 0)  # blur the gray image for better edge detection
-        edged_inner = cv2.Canny(blurred_inner, 5, 5)  # the lower the value the more detailed it would be
-        edged = edged_inner
-        if config.Step_camera:
-            cv2.imshow('edge_inner', edged_inner)
-            cv2.imshow("blurred_inner", blurred_inner)
-
-    else:
-        blurred_outer = cv2.GaussianBlur(gray, (5, 5), 0)  # blur the gray image for better edge detection
-        edged_outer = cv2.Canny(blurred_outer, 14, 10)  # the lower the value the more detailed it would be
-        edged = edged_outer
-        if config.Step_camera:
-            cv2.imshow('edge_outer', edged_outer)
-            cv2.imshow("blurred_outer", blurred_outer)
-            # cv2.waitKey(0)
-    edged_copy = edged.copy()
-    return edged_copy
-
-
-def locating_square(contours, edged_copy, config):
-    # outer square
-    for c in contours:
-        peri = cv2.arcLength(c, True)  # grabs the contours of each points to complete a shape
-        # get the approx. points of the actual edges of the corners
-        approx = cv2.approxPolyDP(c, 0.01 * peri, True)
-        cv2.drawContours(edged_copy, [approx], -1, (255, 0, 0), 3)
-        if config.Step_detection:
-            cv2.imshow("contours_approx", edged_copy)
-
-        if 4 <= len(approx) <= 6:
-            (x, y, w, h) = cv2.boundingRect(approx)  # gets the (x,y) of the top left of the square and the (w,h)
-            aspectRatio = w / float(h)  # gets the aspect ratio of the width to height
-            area = cv2.contourArea(c)  # grabs the area of the completed square
-            hullArea = cv2.contourArea(cv2.convexHull(c))
-            solidity = area / float(hullArea)
-            keepDims = w > 10 and h > 10
-            keepSolidity = solidity > 0.9  # to check if it's near to be an area of a square
-            keepAspectRatio = 0.6 <= aspectRatio <= 1.4
-            if keepDims and keepSolidity and keepAspectRatio:  # checks if the values are true
-                return x, y, w, h, approx, c
+            with open(f'{save.save_dir}/{config.name_of_folder}_information.txt', 'a') as f:
+                f.write("Colour and Character Recognition for a 2 Square Target \n")
+                f.write(f"Resolution of the images = 1080p \n")
+                f.write(f"method used for character recognition = {config.character} \n")
+                f.write(f"method used for colour recognition = {config.colour} \n")
+                f.write("\n")
 
 
 def main():

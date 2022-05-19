@@ -46,10 +46,10 @@ def character(img):
     config = Settings()
 
     # to initialise tesseract
-    if config.device_for_tesseract == "pc":
+    if config.device_for_tesseract == "windows":
         pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
         TESSDATA_PREFIX = r"C:\Program Files\Tesseract-OCR"
-    elif config.device_for_tesseract == "pi":
+    elif config.device_for_tesseract == "linux":
         TESSDATA_PREFIX = r"\usr\share\tesseract-ocr"
 
     # initialising variables
@@ -87,7 +87,7 @@ def character(img):
 
     elif config.character == "tesseract":
         # configuration setting to convert image to string.
-        configuration = "-l eng --oem 3 --psm 10"
+        configuration = "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -l eng --oem 3 --psm 10"
 
         # This will recognize the text from the image of bounding box
         charactername = pytesseract.image_to_string(img_thresh_copy, config=configuration)
