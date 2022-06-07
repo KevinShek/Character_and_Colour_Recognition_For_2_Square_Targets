@@ -7,17 +7,17 @@ class Settings:
     def __init__(self):
         # The steps of the programs
         self.Step_camera = False  # stages of camera activating
-        self.Step_letter = True  # view the stages of character recognition
+        self.Step_letter = False  # view the stages of character recognition
         self.Step_color = False  # view the stages of colour recognition
-        self.Step_detection = True  # stages of detection
+        self.Step_detection = False  # stages of detection
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "phone_frames_static_test_knn_rgb" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "static_test_phone_tesseract_hsv_redo" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../frames/phone_camera"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/static_test/phone_camera_redo"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame

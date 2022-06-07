@@ -42,6 +42,9 @@ def results_of_distance_test(filename, predicted_character, predicted_color, act
     else:
         correct_colour = 0
 
+    print(f"Predicted character and colour is: {predicted_character} and {predicted_color}")
+    print(f"Actual character and colour is: {actual_character} and {actual_color}")
+
     with open(f'{result_dir}/{resolution_used}_results.csv', 'a') as csvfile:  # for testing purposes
         filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         filewriter.writerow([str(filename), str(predicted_character), str(actual_character), str(correct_character), str(predicted_color), str(actual_color), str(correct_colour)])
@@ -57,6 +60,9 @@ def results_of_static_test(filename, predicted_character, predicted_color, actua
     else:
         correct_colour = 0
 
+    print(f"Predicted character and colour is: {predicted_character} and {predicted_color}")
+    print(f"Actual character and colour is: {actual_character} and {actual_color}")
+    
     with open(f'{result_dir}/{config.name_of_folder}_results.csv', 'a') as csvfile:  # for testing purposes
         filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         filewriter.writerow([str(filename), str(predicted_character), str(actual_character), str(correct_character), str(predicted_color), str(actual_color), str(correct_colour)])
@@ -267,15 +273,15 @@ def capture_setting():
                     actual_character = f"{name_of_image}".rsplit('_', 2)[0]
 
                     if config.colour == "hsv":
-                        dict_of_colour_with_character = {'1': "gray", '2': "gray", '3': "black", '4': "black", '5': "cyan", '6': "cyan", '7': "gray", '8': "gray", '9': "yellow", 
-                        'A': "cyan", 'B': "red", 'C': "yellow-red", 'D': "blue cyan", 'E': "blue", 'F': "blue cyan", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "yellow", 
-                        'K': "yellow", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
-                        'T': "blue", 'U': "green", 'V': "red", 'W': "red", 'X': "yellow-red", 'Y': "blue", 'Z': "magenta"}
+                        dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
                     elif config.colour == "rgb":
-                        dict_of_colour_with_character = {'1': "grey", '2': "grey", '3': "grey", '4': "grey", '5': "cyan", '6': "cyan", '7': "grey", '8': "grey", '9': "green", 
-                        'A': "cyan", 'B': "brown", 'C': "orange", 'D': "blue", 'E': "blue", 'F': "blue", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "green", 
-                        'K': "green", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
-                        'T': "blue", 'U': "green", 'V': "brown", 'W': "red", 'X': "orange", 'Y': "blue", 'Z': "magenta"}
+                        dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
                     else:
                         print("please choose hsv or rgb")
                         break
@@ -365,15 +371,15 @@ def capture_setting():
                 actual_character = f"{name_of_image}".rsplit('_', 1)[0]
 
                 if config.colour == "hsv":
-                    dict_of_colour_with_character = {'1': "gray", '2': "gray", '3': "black", '4': "black", '5': "cyan", '6': "cyan", '7': "gray", '8': "gray", '9': "yellow", 
-                    'A': "cyan", 'B': "red", 'C': "yellow-red", 'D': "blue cyan", 'E': "blue", 'F': "blue cyan", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "yellow", 
-                    'K': "yellow", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
-                    'T': "blue", 'U': "green", 'V': "red", 'W': "red", 'X': "yellow-red", 'Y': "blue", 'Z': "magenta"}
+                    dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
                 elif config.colour == "rgb":
-                    dict_of_colour_with_character = {'1': "grey", '2': "grey", '3': "grey", '4': "grey", '5': "cyan", '6': "cyan", '7': "grey", '8': "grey", '9': "green", 
-                    'A': "cyan", 'B': "brown", 'C': "orange", 'D': "blue", 'E': "blue", 'F': "blue", 'G': "yellow", 'H': "yellow", 'I': "green",'J': "green", 
-                    'K': "green", 'L': "magenta", 'M': "magenta", 'N': "magenta", 'O': "green", 'P': "green", 'Q': "red", 'R': "blue", 'S': "cyan", 
-                    'T': "blue", 'U': "green", 'V': "brown", 'W': "red", 'X': "orange", 'Y': "blue", 'Z': "magenta"}
+                    dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
                 else:
                     print("please choose hsv or rgb")
                     break

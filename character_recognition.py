@@ -87,7 +87,9 @@ def character(img):
 
     elif config.character == "tesseract":
         # configuration setting to convert image to string.
-        configuration = "-c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -l eng --oem 3 --psm 10"
+        # configuration = "-c tessedit_char_whitelist=123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ -l eng --oem 3 --psm 10"
+        configuration = "-c tessedit_char_blacklist=0`¬\|!£$%^&*()_+{}:@~<>?-=[];#,./ -l eng --oem 3 --psm 10"
+        # configuration = "-l eng --oem 3 --psm 10"
 
         # This will recognize the text from the image of bounding box
         charactername = pytesseract.image_to_string(img_thresh_copy, config=configuration)
