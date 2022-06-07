@@ -27,7 +27,9 @@ def solution(counter, marker, predicted_character, predicted_color, result_dir):
     print(predicted_color + " is the colour of ground marker", marker)
 
     counter = 1
-    marker += 1
+    config = Settings()
+    if config.capture != "image":
+        marker += 1
 
     return marker, counter
 
