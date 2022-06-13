@@ -11,3 +11,5 @@ venv
 result_dir
 Pipfile
 pipfile.lock
+training_knn/colour
+training_knn/training_rgb.py

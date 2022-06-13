@@ -13,11 +13,11 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "static_test_phone_tesseract_hsv_redo" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "static_test_phone_knn_rgb_redo_deformed" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/static_test/phone_camera_redo"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/static_test/phone_camera_redo_org_1080p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
@@ -29,11 +29,11 @@ class Settings:
 
         # Methods
         self.device_for_tesseract = "linux" # (windows/linux)
-        self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+        self.character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
         self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
         # there is "otsu" or "custom"
-        self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+        self.colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
 

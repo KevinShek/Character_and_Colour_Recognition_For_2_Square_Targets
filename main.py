@@ -165,7 +165,7 @@ def capture_setting():
                 frame = image.array
                 end = time.time()
 
-                color, roi, frame, success = detection(frame, config)
+                color, roi, frame, outer_edge, inner_edge, success = detection(frame, config)
                 
                 if success:
                     counter = counter + 1
@@ -180,8 +180,8 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -221,7 +221,7 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
                     marker = Path(name).stem # grabs the name with the extension
 
-                    color, roi, frame, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
 
                     if success:
                         predicted_character, contour_image, chosen_image = character_recognition.character(color)
@@ -229,13 +229,18 @@ def capture_setting():
 
                         _, _ = solution(counter, marker, predicted_character, predicted_color, save.save_dir)
 
-                        if config.save_results:
-                            name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", color, roi, frame, contour_image, processed_image, chosen_image]
-                            for value in range(5):
-                                image_name = f"{marker}_{name_of_results[value]}.jpg"
-                                image = name_of_results[value + 6]
-                                if image is not None:
-                                    save.save_the_image(image_name, image)
+                    else:
+                        contour_image = None
+                        processed_image = None
+                        chosen_image = None
+
+                    if config.save_results:
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                        for value in range(7):
+                            image_name = f"{marker}_{name_of_results[value]}.jpg"
+                            image = name_of_results[value + 8]
+                            if image is not None:
+                                save.save_the_image(image_name, image)
 
                         print("Detected and saved a target")
             print(f"there is a total image count of {len(image_count)} and frames appended {len(cap)}")
@@ -296,7 +301,7 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
 
                     t = time.time()
-                    color, roi, frame, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
 
                     if success:
                         t0 += time.time() - t
@@ -315,15 +320,20 @@ def capture_setting():
                             correct_prediction_of_colour += 1
                         
                         results_of_distance_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, resolution_used, internal_folder)
-                        
-                        if config.save_results:
-                            name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                            image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
-                            for value, data in enumerate(name_of_results):
-                                image_name = f"{internal_folder}/{name_of_image}_{data}.jpg"
-                                image = image_results[value]
-                                if image is not None:
-                                    save.save_the_image(image_name, image)
+                    
+                    else:
+                        contour_image = None
+                        processed_image = None
+                        chosen_image = None
+
+                    if config.save_results:
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                        for value, data in enumerate(name_of_results):
+                            image_name = f"{internal_folder}/{name_of_image}_{data}.jpg"
+                            image = image_results[value]
+                            if image is not None:
+                                save.save_the_image(image_name, image)
 
                 percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
                 percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100
@@ -394,7 +404,7 @@ def capture_setting():
                 test_image = cv2.imread(str(filename))
 
                 t = time.time()
-                color, roi, frame, success = detection(test_image, config)
+                color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
 
                 if success:
                     t0 += time.time() - t
@@ -413,15 +423,20 @@ def capture_setting():
                         correct_prediction_of_colour += 1
                     
                     results_of_static_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
+                
+                else:
+                    contour_image = None
+                    processed_image = None
+                    chosen_image = None
                     
-                    if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
-                        for value, data in enumerate(name_of_results):
-                            image_name = f"{name_of_image}_{data}.jpg"
-                            image = image_results[value]
-                            if image is not None:
-                                save.save_the_image(image_name, image)
+                if config.save_results:
+                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
+                    image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                    for value, data in enumerate(name_of_results):
+                        image_name = f"{name_of_image}_{data}.jpg"
+                        image = image_results[value]
+                        if image is not None:
+                            save.save_the_image(image_name, image)
 
             percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
             percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100

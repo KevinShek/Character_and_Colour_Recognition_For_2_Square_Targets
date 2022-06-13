@@ -23,7 +23,10 @@ def detection(frame, config):
     try:
         x, y, w, h, approx, cnt = locating_square(contours, edged_copy, config)
     except TypeError:
-        return _, _, _, False
+        if config.capture == "pc" or config.capture == "pi":
+            return _, _, _, _, _, False
+        else:
+            return _, _, _, edged_copy, _, False
 
     if config.Step_camera:
         rect = cv2.minAreaRect(cnt)
@@ -71,11 +74,13 @@ def detection(frame, config):
             cv2.waitKey(0)
 
         try:
-            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edged_copy, config)
+            inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edge, config)
         except TypeError:
-            if config.testing == "detection":
+            if config.capture == "pc" or config.capture == "pi":
+                return _, _, _, _, _, False
+            else:
                 print("Detection failed to locate the inner square")
-            return _, _, _, False
+                return _, _, _, edged_copy, edge, False
         color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
         print("detected a square target")
 
@@ -105,7 +110,7 @@ def detection(frame, config):
         cv2.imshow("captured image", roi)
         cv2.waitKey(0)
 
-    return color, roi, frame, True
+    return color, roi, frame, edged_copy, edge, True
 
 
 def edge_detection(frame, inner_switch, config):
@@ -126,7 +131,7 @@ def edge_detection(frame, inner_switch, config):
             cv2.imshow('edge_outer', edged_outer)
             cv2.imshow("blurred_outer", blurred_outer)
             # cv2.waitKey(0)
-    edged_copy = edged.copy()
+    edged_copy = edged
     return edged_copy
 
 
