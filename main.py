@@ -108,7 +108,7 @@ def capture_setting():
                     if k == 27:
                         break
 
-                color, roi, frame, success = detection(frame, config)
+                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(frame, config)
 
                 if success:
                     counter = counter + 1
@@ -123,8 +123,8 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -165,7 +165,7 @@ def capture_setting():
                 frame = image.array
                 end = time.time()
 
-                color, roi, frame, outer_edge, inner_edge, success = detection(frame, config)
+                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(frame, config)
                 
                 if success:
                     counter = counter + 1
@@ -180,8 +180,8 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -221,7 +221,7 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
                     marker = Path(name).stem # grabs the name with the extension
 
-                    color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
 
                     if success:
                         predicted_character, contour_image, chosen_image = character_recognition.character(color)
@@ -235,10 +235,10 @@ def capture_setting():
                         chosen_image = None
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
-                        for value in range(7):
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
+                        for value in range(8):
                             image_name = f"{marker}_{name_of_results[value]}.jpg"
-                            image = name_of_results[value + 8]
+                            image = name_of_results[value + 9]
                             if image is not None:
                                 save.save_the_image(image_name, image)
 
@@ -251,10 +251,10 @@ def capture_setting():
 
             with open(f'{save.save_dir}/{resolution_used}_results.csv', 'a') as csvfile:  # making the csv file
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                filewriter.writerow(["Filename" , "Predicted Character", "Actual Character", "Correct Character", "Predicted Colour", "Actual Colour", "Correct Colour"])
+                filewriter.writerow(["Filename", "Predicted Character", "Actual Character", "Correct Character", "Predicted Colour", "Actual Colour", "Correct Colour"])
             with open(f'{save.save_dir}/{resolution_used}_results_overall.csv', 'a') as csvfile:  # for testing purposes
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                filewriter.writerow(["Distance", "Correct Guess Character", "Correct Guess Character (%)", "Correct Guess Colour", "Correct Guess Colour (%)", "Detection Speed (ms)", "Character Recognition Speed (ms)", "Colour Recognition Speed (ms)", "Total Speed (ms)", f"Character Regnition Method ({config.character})", f"Colour Regnition Method ({config.colour})"])
+                filewriter.writerow(["Distance","Detected Targets", "Correct Guess Character", "Correct Guess Character (%)", "Correct Guess Colour", "Correct Guess Colour (%)", "Detection Speed (ms)", "Character Recognition Speed (ms)", "Colour Recognition Speed (ms)", "Total Speed (ms)", f"Character Regnition Method ({config.character})", f"Colour Regnition Method ({config.colour})"])
 
             list_of_internal_folders = sorted(os.listdir(data_dir)) # sorted into numerical order
 
@@ -270,14 +270,20 @@ def capture_setting():
                 data_dir = Path(f"{config.media}/{internal_folder}") # path to the images where it is located
                 # the following code interite over the extension that exist within a folder and place them into a single list
                 image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
+
                 # image_count = len(list(data_dir.glob('*.jpg')))
                 for name in image_count:
                     # head, tail = ntpath.split(name)
                     filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
-                    cap.append(filename) # append the path of the images to the list
                     name_of_image = filename.stem
                     # print(name_of_image)
-                    actual_character = f"{name_of_image}".rsplit('_', 2)[0]
+                    actual_character = f"{name_of_image}".rsplit('_', 3)[0]
+                    option = f"{name_of_image}".rsplit('_', 3)[1]
+
+                    if option == "off":
+                        continue # skips the current iteration
+                    
+                    cap.append(filename) # append the path of the images to the list
 
                     if config.colour == "hsv":
                         dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
@@ -301,7 +307,7 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
 
                     t = time.time()
-                    color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
 
                     if success:
                         t0 += time.time() - t
@@ -327,8 +333,8 @@ def capture_setting():
                         chosen_image = None
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{internal_folder}/{name_of_image}_{data}.jpg"
                             image = image_results[value]
@@ -345,7 +351,7 @@ def capture_setting():
 
                 with open(f'{save.save_dir}/{resolution_used}_results_overall.csv', 'a') as csvfile:  # for testing purposes
                     filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                    filewriter.writerow([str(internal_folder), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
+                    filewriter.writerow([str(internal_folder), str(seen), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
 
                 print(f"percentage_of_correct_character = {percentage_of_correct_character}")
                 print(f"percentage_of_correct_colour = {percentage_of_correct_colour}")
@@ -380,7 +386,7 @@ def capture_setting():
                 cap.append(filename) # append the path of the images to the list
                 name_of_image = filename.stem
                 # print(name_of_image)
-                actual_character = f"{name_of_image}".rsplit('_', 1)[0]
+                actual_character = f"{name_of_image}".rsplit('_', 3)[0]
 
                 if config.colour == "hsv":
                     dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
@@ -404,7 +410,7 @@ def capture_setting():
                 test_image = cv2.imread(str(filename))
 
                 t = time.time()
-                color, roi, frame, outer_edge, inner_edge, success = detection(test_image, config)
+                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
 
                 if success:
                     t0 += time.time() - t
@@ -430,8 +436,8 @@ def capture_setting():
                     chosen_image = None
                     
                 if config.save_results:
-                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge"]
-                    image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge]
+                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
+                    image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
                     for value, data in enumerate(name_of_results):
                         image_name = f"{name_of_image}_{data}.jpg"
                         image = image_results[value]

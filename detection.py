@@ -26,7 +26,16 @@ def detection(frame, config):
         if config.capture == "pc" or config.capture == "pi":
             return _, _, _, _, _, False
         else:
-            return _, _, _, edged_copy, _, False
+            return _, _, _, edged_copy, _, _, False
+
+    possible_target = cv2.rectangle(frame,  # draw rectangle on original testing image
+                            (x, y),
+                            # upper left corner
+                            (x + w,
+                             y + h),
+                            # lower right corner
+                            (0, 0, 255),  # green
+                            3)
 
     if config.Step_camera:
         rect = cv2.minAreaRect(cnt)
@@ -80,7 +89,7 @@ def detection(frame, config):
                 return _, _, _, _, _, False
             else:
                 print("Detection failed to locate the inner square")
-                return _, _, _, edged_copy, edge, False
+                return _, _, _, edged_copy, edge, possible_target, False
         color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
         print("detected a square target")
 
@@ -110,7 +119,7 @@ def detection(frame, config):
         cv2.imshow("captured image", roi)
         cv2.waitKey(0)
 
-    return color, roi, frame, edged_copy, edge, True
+    return color, roi, frame, edged_copy, edge, possible_target, True
 
 
 def edge_detection(frame, inner_switch, config):
