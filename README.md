@@ -7,6 +7,12 @@ This repository contains the scripts for the following tasks: character and colo
 
 It contained a few test images for you to understand how it works and it can work with your webcam as well as long you have adjusted the settings in the **config.py**
 
+# About the system
+  <li>It is only able to detect a single square target per frame/image.</li>
+  <li>Character Recognition apporaches: Tesseract and KNN</li>
+  <li>Colour Recognition apporaches: RGB and HSV</li>
+  <li>Colour Correction method is locating the character which is deemed to be white and calculate the difference that will be added to the entire image via RGB</li>
+
 # How-to-use
 
 Within this code, majority of the controls could be changed within the file called **config.py** which contains operations such as: 
@@ -19,9 +25,6 @@ However, if you wish to finetune the scripts, they are seperated to their task t
 You can find the target detection inside the **main.py**.
 
 To run the code type into the command line / Terminal the following command: ```python main.py```
-
-# Issue
-  <li>It is only able to detect the a single square target per frame/image.</li>
 
 # Dependency
 You can use the requirement.txt for an ease of installing the following python packages.
