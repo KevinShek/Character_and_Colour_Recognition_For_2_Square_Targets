@@ -9,9 +9,9 @@ It contained a few test images for you to understand how it works and it can wor
 
 # About the system
   <li>It is only able to detect a single square target per frame/image.</li>
-  <li>Character Recognition apporaches: Tesseract and KNN</li>
-  <li>Colour Recognition apporaches: RGB and HSV</li>
-  <li>Colour Correction method is locating the character which is deemed to be white and calculate the difference that will be added to the entire image via RGB</li>
+  <li>Character Recognition apporaches: Tesseract and KNN.</li>
+  <li>Colour Recognition apporaches: RGB and HSV.</li>
+  <li>Colour Correction method is locating the character which is deemed to be white and calculate the difference that will be added to the entire image via RGB.</li>
 
 # How-to-use
 
