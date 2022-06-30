@@ -24,9 +24,9 @@ def detection(frame, config):
         x, y, w, h, approx, cnt = locating_square(contours, edged_copy, config)
     except TypeError:
         if config.capture == "pc" or config.capture == "pi":
-            return _, _, _, _, _, False
+            return _, _, _, _, _, _, _, False
         else:
-            return _, _, _, edged_copy, _, _, False
+            return _, _, _, edged_copy, _, _, _, False
 
     possible_target = cv2.rectangle(frame,  # draw rectangle on original testing image
                             (x, y),
@@ -75,6 +75,7 @@ def detection(frame, config):
         inner_switch = 1
         new_roi = img_cropped[int((h / 2) - (h / 3)):int((h / 2) + (h / 3)), int((w / 2) - (w / 3)):int((w / 2) + (w / 3))]
         edge = edge_detection(new_roi, inner_switch, config)
+        before_edge_search = edge.copy()
         (inner_contours, _) = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
 
         if config.Step_detection:
@@ -86,10 +87,10 @@ def detection(frame, config):
             inner_x, inner_y, inner_w, inner_h, approx, _ = locating_square(inner_contours, edge, config)
         except TypeError:
             if config.capture == "pc" or config.capture == "pi":
-                return _, _, _, _, _, False
+                return _, _, _, _, _, _, _, False
             else:
                 print("Detection failed to locate the inner square")
-                return _, _, _, edged_copy, edge, possible_target, False
+                return _, _, _, edged_copy, before_edge_search, edge, possible_target, False
         color = new_roi[inner_y:inner_y + inner_h, inner_x:inner_x + inner_w]
         print("detected a square target")
 
@@ -119,7 +120,7 @@ def detection(frame, config):
         cv2.imshow("captured image", roi)
         cv2.waitKey(0)
 
-    return color, roi, frame, edged_copy, edge, possible_target, True
+    return color, roi, frame, edged_copy, before_edge_search, edge, possible_target, True
 
 
 def edge_detection(frame, inner_switch, config):

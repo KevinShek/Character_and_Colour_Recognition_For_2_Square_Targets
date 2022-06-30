@@ -108,7 +108,7 @@ def capture_setting():
                     if k == 27:
                         break
 
-                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(frame, config)
+                color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(frame, config)
 
                 if success:
                     counter = counter + 1
@@ -123,8 +123,8 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target, before_inner_edge_search]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -153,11 +153,20 @@ def capture_setting():
 
         camera = PiCamera()
         camera.resolution = (config.width, config.height)
-        camera.brightness = 50  # 50 is default
-        camera.framerate = 90
-        camera.awb_mode = 'auto'
+        # camera.brightness = 50  # 50 is default
+        camera.framerate = 30
+        camera.iso = 100 
+        # camera.awb_mode = 'auto'
+        time.sleep(2)
+        camera.exposure_mode = 'off'
+        g = camera.awb_gains
+        camera.awb_mode = 'off'
+        camera.awb_gains = g
         camera.shutter_speed = camera.exposure_speed
+
         cap = PiRGBArray(camera, size=(config.width, config.height))
+
+        print("Camera Ready!")
 
         for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
             #  to start the progress of capture and don't stop unless the counter increases and has surpass 5 seconds
@@ -165,7 +174,7 @@ def capture_setting():
                 frame = image.array
                 end = time.time()
 
-                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(frame, config)
+                color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(frame, config)
                 
                 if success:
                     counter = counter + 1
@@ -180,8 +189,8 @@ def capture_setting():
                     predicted_color_list.append(predicted_color)
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target, before_inner_edge_search]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{marker}_{data}_{counter}.jpg"
                             image = image_results[value]
@@ -221,7 +230,7 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
                     marker = Path(name).stem # grabs the name with the extension
 
-                    color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
 
                     if success:
                         predicted_character, contour_image, chosen_image = character_recognition.character(color)
@@ -235,10 +244,10 @@ def capture_setting():
                         chosen_image = None
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
-                        for value in range(8):
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target","before_inner_edge_search", color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target, before_inner_edge_search]
+                        for value in range(9):
                             image_name = f"{marker}_{name_of_results[value]}.jpg"
-                            image = name_of_results[value + 9]
+                            image = name_of_results[value + 10]
                             if image is not None:
                                 save.save_the_image(image_name, image)
 
@@ -277,12 +286,12 @@ def capture_setting():
                     filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
                     name_of_image = filename.stem
                     # print(name_of_image)
-                    actual_character = f"{name_of_image}".rsplit('_', 3)[0]
-                    option = f"{name_of_image}".rsplit('_', 3)[1]
+                    actual_character = f"{name_of_image}".rsplit('_', 5)[0]
+                    option = f"{name_of_image}".rsplit('_', 5)[-1]
 
-                    if option == "off":
+                    if option != config.testing_set:
                         continue # skips the current iteration
-                    
+
                     cap.append(filename) # append the path of the images to the list
 
                     if config.colour == "hsv":
@@ -307,12 +316,13 @@ def capture_setting():
                     test_image = cv2.imread(str(filename))
 
                     t = time.time()
-                    color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
+                    color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
 
                     if success:
                         t0 += time.time() - t
                         t = time.time()
                         predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                        predicted_character = predicted_character.capitalize()
                         t1 += time.time() - t
                         t = time.time()
                         predicted_color, processed_image = colour_recognition.colour(color)
@@ -333,8 +343,8 @@ def capture_setting():
                         chosen_image = None
 
                     if config.save_results:
-                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
-                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
+                        name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                        image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target, before_inner_edge_search]
                         for value, data in enumerate(name_of_results):
                             image_name = f"{internal_folder}/{name_of_image}_{data}.jpg"
                             image = image_results[value]
@@ -386,7 +396,12 @@ def capture_setting():
                 cap.append(filename) # append the path of the images to the list
                 name_of_image = filename.stem
                 # print(name_of_image)
-                actual_character = f"{name_of_image}".rsplit('_', 3)[0]
+                actual_character = f"{name_of_image}".rsplit('_', 5)[0]
+                option = f"{name_of_image}".rsplit('_', 5)[-1]
+
+                if option != config.testing_set:
+                    continue # skips the current iteration
+
 
                 if config.colour == "hsv":
                     dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
@@ -410,12 +425,13 @@ def capture_setting():
                 test_image = cv2.imread(str(filename))
 
                 t = time.time()
-                color, roi, frame, outer_edge, inner_edge, possible_target, success = detection(test_image, config)
+                color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
 
                 if success:
                     t0 += time.time() - t
                     t = time.time()
                     predicted_character, contour_image, chosen_image = character_recognition.character(color)
+                    predicted_character = predicted_character.capitalize()
                     t1 += time.time() - t
                     t = time.time()
                     predicted_color, processed_image = colour_recognition.colour(color)
@@ -436,8 +452,8 @@ def capture_setting():
                     chosen_image = None
                     
                 if config.save_results:
-                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target"]
-                    image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target]
+                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                    image_results = [color, roi, frame, contour_image, processed_image, chosen_image, outer_edge, inner_edge, possible_target, before_inner_edge_search]
                     for value, data in enumerate(name_of_results):
                         image_name = f"{name_of_image}_{data}.jpg"
                         image = image_results[value]
