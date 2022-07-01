@@ -393,7 +393,6 @@ def capture_setting():
             for name in image_count:
                 # head, tail = ntpath.split(name)
                 filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
-                cap.append(filename) # append the path of the images to the list
                 name_of_image = filename.stem
                 # print(name_of_image)
                 actual_character = f"{name_of_image}".rsplit('_', 5)[0]
@@ -402,6 +401,7 @@ def capture_setting():
                 if option != config.testing_set:
                     continue # skips the current iteration
 
+                cap.append(filename) # append the path of the images to the list
 
                 if config.colour == "hsv":
                     dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
