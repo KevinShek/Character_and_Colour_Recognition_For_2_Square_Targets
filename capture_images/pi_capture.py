@@ -9,6 +9,7 @@ import csv
 from pathlib import Path
 import datetime
 from fractions import Fraction
+from set_picamera_gain import set_analog_gain, set_digital_gain
 
 
 def pi_capture(test_name, resolution, distance, character, camera, path_of_folder): 
@@ -97,12 +98,13 @@ if __name__ == '__main__':
     camera.exposure_mode = 'off'
     g = camera.awb_gains
     camera.awb_mode = 'off'
-    camera.awb_gains = g
     if opt.test:
       if opt.test_name == "distance_test":
         camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
-        camera.digital_gain = 1
-        camera.analog_gain = Fraction(331, 128)
+        set_digital_gain(camera, 1)
+        set_analog_gain(camera, Fraction(331, 128))
+    else:
+        camera.awb_gains = g
     
     """# calbration of camera
     camera.resolution = (1280, 720)
