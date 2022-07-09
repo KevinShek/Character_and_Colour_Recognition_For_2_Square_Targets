@@ -13,28 +13,31 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "static_test_knn_rgb_pi_image_capture" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "distance_test_garage_f_tesseract_hsv_480p_new_detection" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/static_test/raspberry_pi_camera_off"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/distance_test_garage_f/480p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
         
         # capture
         # detection and recognition
-        self.testing = "static_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
+        self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
         self.testing_set = "image"
+        self.distance = "1.0"  # this is to set the chosen distance for the real-time detection test
+        self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
+        self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
         self.pause = False # captures images until it hits the counter for webcam
 
         # Methods
         self.device_for_tesseract = "linux" # (windows/linux)
-        self.character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+        self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
         self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
         # there is "otsu" or "custom"
-        self.colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+        self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
 

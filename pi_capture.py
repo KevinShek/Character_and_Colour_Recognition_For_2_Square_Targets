@@ -8,6 +8,7 @@ import numpy as np
 import csv
 from pathlib import Path
 import datetime
+from fractions import Fraction
 
 
 def pi_capture(test_name, resolution, distance, character, camera, path_of_folder): 
@@ -53,7 +54,6 @@ def pi_capture(test_name, resolution, distance, character, camera, path_of_folde
       break
       
     print(f"digatal gain and analog gain = {camera.digital_gain} and {camera.analog_gain}") # this is fixed due to exposure mode being switched off
-    from fractions import Fraction
     red_gain, blue_gain = camera.awb_gains
     date = datetime.datetime.now()
     
@@ -98,7 +98,11 @@ if __name__ == '__main__':
     g = camera.awb_gains
     camera.awb_mode = 'off'
     camera.awb_gains = g
-    
+    if opt.test:
+      if opt.test_name == "distance_test":
+        camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
+        camera.digital_gain = 1
+        camera.analog_gain = Fraction(331, 128)
     
     """# calbration of camera
     camera.resolution = (1280, 720)
