@@ -17,6 +17,7 @@ def detection(frame, config):
     #         frame = frame[int(height / 3):int(3 * height / 4), int(width / 3):int(3 * width / 4)]
 
     edged_copy = edge_detection(frame, inner_switch, config)
+    before_edge_search_outer_square = edged_copy.copy()
 
     # find contours in the threshold image and initialize the
     (contours, _) = cv2.findContours(edged_copy, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
@@ -93,7 +94,7 @@ def detection(frame, config):
                     # return _, _, _, _, _, _, _, False
                 else:
                     print("Detection failed to locate the inner square")
-                    storing_inner_boxes_data.extend((_, _, _, edged_copy, before_edge_search, edge, possible_target, False))
+                    storing_inner_boxes_data.extend((_, _, _, before_edge_search_outer_square, before_edge_search, edge, possible_target, False))
                     continue
                     # return _, _, _, edged_copy, before_edge_search, edge, possible_target, False
             
@@ -126,14 +127,14 @@ def detection(frame, config):
             cv2.imshow("captured image", roi)
             cv2.waitKey(0)
             
-        storing_inner_boxes_data.extend((color, roi, frame, edged_copy, before_edge_search, edge, possible_target, True))
+        storing_inner_boxes_data.extend((color, roi, frame, before_edge_search_outer_square, before_edge_search, edge, possible_target, True))
         return storing_inner_boxes_data
     
     if config.capture == "pc" or config.capture == "pi":
         storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))
         # return _, _, _, _, _, _, _, False
     else:
-        storing_inner_boxes_data.extend((_, _, _, edged_copy, _, _, _, False))
+        storing_inner_boxes_data.extend((_, _, _, before_edge_search_outer_square, _, _, _, False))
         # return _, _, _, edged_copy, _, _, _, False
         
     return storing_inner_boxes_data
