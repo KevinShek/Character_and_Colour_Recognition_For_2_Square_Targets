@@ -13,11 +13,11 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "distance_test_garage_f_tesseract_hsv_480p_new_detection" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "distance_test_garage_constant_tesseract_hsv_image_720p_corrected" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/distance_test_garage_f/480p"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/distance_test_garage_constant/720p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame

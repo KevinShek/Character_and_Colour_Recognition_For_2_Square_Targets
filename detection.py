@@ -128,7 +128,7 @@ def detection(frame, config):
             cv2.waitKey(0)
             
         storing_inner_boxes_data.extend((color, roi, frame, before_edge_search_outer_square, before_edge_search, edge, possible_target, True))
-        return storing_inner_boxes_data
+        # return storing_inner_boxes_data
     
     if config.capture == "pc" or config.capture == "pi":
         storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))

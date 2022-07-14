@@ -215,42 +215,44 @@ def capture_setting():
                     # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(frame, config)
                     storing_inner_boxes_data = detection(frame, config)
                     end_time_for_detection = time.time() - start_time_for_detection
+                    seen_per_image_boolean = 0
                     
                     for i in range(int(len(storing_inner_boxes_data)/8)):                    
                         if storing_inner_boxes_data[7+(8*i)]:
+                            if seen_per_image_boolean == 0:       
+                                seen += 1
+                                seen_per_image_boolean = 1
         
-                            # time that the target has been last seen
-                            start = time.time()
-                            
-                            start_time_for_character = time.time()
-                            predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
-                            end_time_for_character = time.time() - start_time_for_character
-                            
-                            start_time_for_colour = time.time()
-                            predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
-                            end_time_for_colour = time.time() - start_time_for_colour
-                            
-                            if config.testing == "real_time":                     
-                                if predicted_character == actual_character:
-                                    correct_prediction_of_character += 1
-                                if predicted_color == actual_colour:
-                                    correct_prediction_of_colour += 1
-                                    
-                            seen += 1
-        
-                            predicted_character_list.append(predicted_character)
-                            predicted_color_list.append(predicted_color)
-        
-                            if config.save_results:
-                                name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
-                                image_results = [storing_inner_boxes_data[0+(8*i)], storing_inner_boxes_data[1+(8*i)], storing_inner_boxes_data[2+(8*i)], contour_image, processed_image, chosen_image, storing_inner_boxes_data[3+(8*i)], storing_inner_boxes_data[5+(8*i)], storing_inner_boxes_data[6+(8+i)], storing_inner_boxes_data[4+(8*i)]]
-                                for value, data in enumerate(name_of_results):
-                                    image_name = f"{marker}_{data}_{counter}.jpg"
-                                    image = image_results[value]
-                                    if image is not None:
-                                        save.save_the_image(image_name, image)
-                            counter = counter + 1
-                            print("Target Captured and saved to file")
+                                # time that the target has been last seen
+                                start = time.time()
+                                
+                                start_time_for_character = time.time()
+                                predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
+                                end_time_for_character = time.time() - start_time_for_character
+                                
+                                start_time_for_colour = time.time()
+                                predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
+                                end_time_for_colour = time.time() - start_time_for_colour
+                                
+                                if config.testing == "real_time":                     
+                                    if predicted_character == actual_character:
+                                        correct_prediction_of_character += 1
+                                    if predicted_color == actual_colour:
+                                        correct_prediction_of_colour += 1
+            
+                                predicted_character_list.append(predicted_character)
+                                predicted_color_list.append(predicted_color)
+            
+                                if config.save_results:
+                                    name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                                    image_results = [storing_inner_boxes_data[0+(8*i)], storing_inner_boxes_data[1+(8*i)], storing_inner_boxes_data[2+(8*i)], contour_image, processed_image, chosen_image, storing_inner_boxes_data[3+(8*i)], storing_inner_boxes_data[5+(8*i)], storing_inner_boxes_data[6+(8+i)], storing_inner_boxes_data[4+(8*i)]]
+                                    for value, data in enumerate(name_of_results):
+                                        image_name = f"{marker}_{data}_{counter}.jpg"
+                                        image = image_results[value]
+                                        if image is not None:
+                                            save.save_the_image(image_name, image)
+                                counter = counter + 1
+                                print("Target Captured and saved to file")
     
                     if counter == 8:
                         print("Starting Recognition Thread")
@@ -260,12 +262,16 @@ def capture_setting():
                         if config.testing == "real_time":
                             name = f"{marker}_{counter}"
                             results_of_real_detection_test(name, predicted_character, actual_character, predicted_color, actual_colour, save.save_dir)
+                            detection_speed = end_time_for_detection / counter * 1E3
+
                             if seen != 0: 
-                                speed = tuple(x / seen * 1E3 for x in (end_time_for_detection, end_time_for_character, end_time_for_colour, end_time_for_detection + end_time_for_character + end_time_for_colour))
+                                recognition_speed = [x / seen * 1E3 for x in (end_time_for_character, end_time_for_colour)]
+                                total_speed = detection_speed + recognition_speed[0] + recognition_speed[1]
+                                speed = [detection_speed, recognition_speed[0], recognition_speed[1], total_speed]
                                 percentage_of_correct_character = (correct_prediction_of_character/seen) * 100
                                 percentage_of_correct_colour = (correct_prediction_of_colour/seen) * 100
                             else:
-                                speed = [0.0, 0.0, 0.0, 0.0]
+                                speed = [detection_speed, 0.0, 0.0, detection_speed]
                                 percentage_of_correct_character, percentage_of_correct_colour = 0, 0
                             date = datetime.datetime.now()
                                 
@@ -287,12 +293,16 @@ def capture_setting():
                     if config.testing == "real_time":
                         name = f"{marker}_{counter}"
                         results_of_real_detection_test(name, predicted_character, actual_character, predicted_color, actual_colour, save.save_dir)
+                        detection_speed = end_time_for_detection / counter * 1E3
+
                         if seen != 0: 
-                                speed = tuple(x / seen * 1E3 for x in (end_time_for_detection, end_time_for_character, end_time_for_colour, end_time_for_detection + end_time_for_character + end_time_for_colour))
-                                percentage_of_correct_character = (correct_prediction_of_character/seen) * 100
-                                percentage_of_correct_colour = (correct_prediction_of_colour/seen) * 100
+                            recognition_speed = [x / seen * 1E3 for x in (end_time_for_character, end_time_for_colour)]
+                            total_speed = detection_speed + recognition_speed[0] + recognition_speed[1]
+                            speed = [detection_speed, recognition_speed[0], recognition_speed[1], total_speed]
+                            percentage_of_correct_character = (correct_prediction_of_character/seen) * 100
+                            percentage_of_correct_colour = (correct_prediction_of_colour/seen) * 100
                         else:
-                            speed = [0.0, 0.0, 0.0, 0.0]
+                            speed = [detection_speed, 0.0, 0.0, detection_speed]
                             percentage_of_correct_character, percentage_of_correct_colour = 0, 0
                         date = datetime.datetime.now()
                             
@@ -322,12 +332,17 @@ def capture_setting():
             if config.testing == "real_time":
                 name = f"{marker}_{counter}"
                 results_of_real_detection_test(name, predicted_character, actual_character, predicted_color, actual_colour, save.save_dir)
+
+                detection_speed = end_time_for_detection / counter * 1E3
+
                 if seen != 0: 
-                    speed = tuple(x / seen * 1E3 for x in (end_time_for_detection, end_time_for_character, end_time_for_colour, end_time_for_detection + end_time_for_character + end_time_for_colour))
+                    recognition_speed = [x / seen * 1E3 for x in (end_time_for_character, end_time_for_colour)]
+                    total_speed = detection_speed + recognition_speed[0] + recognition_speed[1]
+                    speed = [detection_speed, recognition_speed[0], recognition_speed[1], total_speed]
                     percentage_of_correct_character = (correct_prediction_of_character/seen) * 100
                     percentage_of_correct_colour = (correct_prediction_of_colour/seen) * 100
                 else:
-                    speed = [0.0, 0.0, 0.0, 0.0]
+                    speed = [detection_speed, 0.0, 0.0, detection_speed]
                     percentage_of_correct_character, percentage_of_correct_colour = 0, 0
                     
                 date = datetime.datetime.now()
@@ -401,6 +416,7 @@ def capture_setting():
                 correct_prediction_of_character, correct_prediction_of_colour= 0, 0
                 t0, t1, t2 = 0., 0., 0.
                 seen = 0
+                print(f"distance = {internal_folder}m")
 
                 # making internal folders for each distances
                 Path(f"{save.save_dir}/{internal_folder}").mkdir(parents=True, exist_ok=True)
@@ -447,26 +463,30 @@ def capture_setting():
                     t = time.time()
                     # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
                     storing_inner_boxes_data = detection(test_image, config)
+                    # print(f"number of boxes detected = {len(storing_inner_boxes_data)}")
                     t0 += time.time() - t
+                    seen_per_image_boolean = 0
 
                     for i in range(int(len(storing_inner_boxes_data)/8)):                    
                         if storing_inner_boxes_data[7+(8*i)]:
-                            t = time.time()
-                            predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
-                            predicted_character = predicted_character.capitalize()
-                            t1 += time.time() - t
-                            t = time.time()
-                            predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
-                            t2 += time.time() - t
-    
-                            seen += 1
-        
-                            if predicted_character == actual_character:
-                                correct_prediction_of_character += 1
-                            if predicted_color == actual_colour:
-                                correct_prediction_of_colour += 1
-                            
-                            results_of_distance_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, resolution_used, internal_folder)
+                            if seen_per_image_boolean == 0:
+                                seen += 1
+                                seen_per_image_boolean = 1
+                                
+                                t = time.time()
+                                predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
+                                predicted_character = predicted_character.capitalize()
+                                t1 += time.time() - t
+                                t = time.time()
+                                predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
+                                t2 += time.time() - t
+
+                                if predicted_character == actual_character:
+                                    correct_prediction_of_character += 1
+                                if predicted_color == actual_colour:
+                                    correct_prediction_of_colour += 1
+                                
+                                results_of_distance_test(name_of_image, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, resolution_used, internal_folder)
                         
                         else:
                             contour_image = None
@@ -485,10 +505,14 @@ def capture_setting():
                 percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
                 percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100
 
+                detection_speed = t0 / len(cap) * 1E3
+
                 if seen != 0: 
-                    speed = tuple(x / seen * 1E3 for x in (t0, t1, t2, t0 + t1 + t2))
+                    recognition_speed = [x / seen * 1E3 for x in (t1, t2)]
+                    total_speed = detection_speed + recognition_speed[0] + recognition_speed[1]
+                    speed = [detection_speed, recognition_speed[0], recognition_speed[1], total_speed]
                 else:
-                    speed = [0.0, 0.0, 0.0, 0.0]
+                    speed = [detection_speed, 0.0, 0.0, detection_speed]
 
                 with open(f'{save.save_dir}/{resolution_used}_results_overall.csv', 'a') as csvfile:  # for testing purposes
                     filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
@@ -496,6 +520,7 @@ def capture_setting():
 
                 print(f"percentage_of_correct_character = {percentage_of_correct_character}")
                 print(f"percentage_of_correct_colour = {percentage_of_correct_colour}")
+                print(f"detection speed = {detection_speed}")
 
             with open(f'{save.save_dir}/{resolution_used}_information.txt', 'a') as f:
                 f.write("Colour and Character Recognition for a 2 Square Target \n")
@@ -559,25 +584,27 @@ def capture_setting():
                 # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
                 storing_inner_boxes_data = detection(test_image, config)
                 t0 += time.time() - t
+                seen_per_image_boolean = 0
 
                 for i in range(int(len(storing_inner_boxes_data)/8)):                    
                     if storing_inner_boxes_data[7+(8*i)]:
-                        t = time.time()
-                        predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
-                        predicted_character = predicted_character.capitalize()
-                        t1 += time.time() - t
-                        t = time.time()
-                        predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
-                        t2 += time.time() - t
-
-                        seen += 1
-    
-                        if predicted_character == actual_character:
-                            correct_prediction_of_character += 1
-                        if predicted_color == actual_colour:
-                            correct_prediction_of_colour += 1
-                        
-                        results_of_static_test(filename, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
+                        if seen_per_image_boolean == 0:
+                            seen += 1
+                            seen_per_image_boolean = 1
+                            t = time.time()
+                            predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
+                            predicted_character = predicted_character.capitalize()
+                            t1 += time.time() - t
+                            t = time.time()
+                            predicted_color, processed_image = colour_recognition.colour(storing_inner_boxes_data[0+(8*i)])
+                            t2 += time.time() - t
+        
+                            if predicted_character == actual_character:
+                                correct_prediction_of_character += 1
+                            if predicted_color == actual_colour:
+                                correct_prediction_of_colour += 1
+                            
+                            results_of_static_test(filename, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
                     
                     else:
                         contour_image = None
@@ -597,10 +624,14 @@ def capture_setting():
             percentage_of_correct_character = (correct_prediction_of_character/len(cap)) * 100
             percentage_of_correct_colour = (correct_prediction_of_colour/len(cap)) * 100
 
+            detection_speed = t0 / len(cap) * 1E3
+
             if seen != 0: 
-                speed = tuple(x / seen * 1E3 for x in (t0, t1, t2, t0 + t1 + t2))
+                recognition_speed = [x / seen * 1E3 for x in (t1, t2)]
+                total_speed = detection_speed + recognition_speed[0] + recognition_speed[1]
+                speed = [detection_speed, recognition_speed[0], recognition_speed[1], total_speed]
             else:
-                speed = [0.0, 0.0, 0.0, 0.0]
+                speed = [detection_speed, 0.0, 0.0, detection_speed]
 
             with open(f'{save.save_dir}/{config.name_of_folder}_results_overall.csv', 'a') as csvfile:  # for testing purposes
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
