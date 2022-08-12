@@ -1,6 +1,7 @@
 import os
 import cv2
 import numpy as np
+from fractions import Fraction
 
 
 class Settings:
@@ -13,23 +14,32 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "distance_test_garage_constant_tesseract_hsv_image_720p_corrected" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "real_time_test_tesseract_hsv_video_720p_4_5m_90%_full_take2" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/distance_test_garage_constant/720p"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/distance_test_garage_constant/480p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
-        self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
+        self.capture = "pi"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
         
         # capture
         # detection and recognition
-        self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
+        self.testing = "real_time"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
         self.testing_set = "image"
-        self.distance = "1.0"  # this is to set the chosen distance for the real-time detection test
+        self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
         self.pause = False # captures images until it hits the counter for webcam
+        
+        # capturing consistent images camera setting
+        self.framerate = 30
+        self.iso = 100
+        self.digital_gain = 1
+        self.analog_gain = Fraction(970, 699)
+        self.red_gain = Fraction(711, 512)
+        self.blue_gain = Fraction(1620, 779)
+        self.shutter_speed = 0
 
         # Methods
         self.device_for_tesseract = "linux" # (windows/linux)

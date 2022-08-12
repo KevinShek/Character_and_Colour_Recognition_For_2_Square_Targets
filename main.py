@@ -13,6 +13,7 @@ from collections import Counter
 from detection import detection
 import datetime
 from fractions import Fraction
+from capture_images.set_picamera_gain import set_analog_gain, set_digital_gain
 
 """
 The following code contains the detection of the square target and saves only the inner square data
@@ -173,20 +174,26 @@ def capture_setting():
         camera = PiCamera()
         camera.resolution = (config.width, config.height)
         # camera.brightness = 50  # 50 is default
-        camera.framerate = 30
-        camera.iso = 100 
+        camera.framerate = config.framerate
+        camera.iso = config.iso 
         # camera.awb_mode = 'auto'
         time.sleep(2)
         camera.exposure_mode = 'off'
         g = camera.awb_gains
         camera.awb_mode = 'off'
         camera.awb_gains = g
-        camera.shutter_speed = camera.exposure_speed
+        config.shutter_speed = camera.exposure_speed
+        camera.shutter_speed = config.shutter_speed
         red_gain, blue_gain = camera.awb_gains
         end_time_for_detection, end_time_for_character, end_time_for_colour = 0., 0., 0.
         seen = 0
         
         if config.testing == "real_time":
+            camera.awb_gains = config.red_gain, config.blue_gain # rounds to the nearest 1/256th  https://github.com/waveform80/picamera/issues/318
+            set_digital_gain(camera, config.digital_gain)
+            set_analog_gain(camera, config.analog_gain)
+            red_gain, blue_gain = camera.awb_gains
+            time.sleep(1)
             correct_prediction_of_character, correct_prediction_of_colour= 0, 0
             with open(f'{save.save_dir}/detection_results.csv', 'a') as csvfile:  # making the csv file
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
@@ -319,6 +326,7 @@ def capture_setting():
                 
         except KeyboardInterrupt:
             cap.truncate(0)
+            camera.close()
             if seen != 0:
                 common_character = Counter(predicted_character_list).most_common(1)[0][0]
                 common_color = Counter(predicted_color_list).most_common(1)[0][0]
@@ -349,7 +357,7 @@ def capture_setting():
                     
                 with open(f'{save.save_dir}/detection_results_overall.csv', 'a') as csvfile:  # for testing purposes
                     filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                    filewriter.writerow([str(config.distance), str(seen), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3]), str(config.character), str(config.colour), str(camera.shutter_speed), str(camera.iso), str(camera.digital_gain), str(camera.analog_gain), str(red_gain), str(blue_gain), str(date)])
+                    filewriter.writerow([str(config.distance), str(seen), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3]), str(config.character), str(config.colour), str(config.shutter_speed), str(config.iso), str(config.digital_gain), str(config.analog_gain), str(red_gain), str(blue_gain), str(date)])
             
             print("Progress saved and exiting the program.")
                                 
