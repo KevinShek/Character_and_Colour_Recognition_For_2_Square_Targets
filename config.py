@@ -14,19 +14,19 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "real_time_test_tesseract_hsv_video_720p_4_5m_90%_full_take2" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "detection_test_tesseract_hsv_video_1080p" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/distance_test_garage_constant/480p"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/distance_test_garage_constant/1080p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
-        self.capture = "pi"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
+        self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
         
         # capture
         # detection and recognition
-        self.testing = "real_time"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
-        self.testing_set = "image"
+        self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
+        self.testing_set = "video"
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
@@ -41,7 +41,7 @@ class Settings:
         self.blue_gain = Fraction(1620, 779)
         self.shutter_speed = 0
 
-        # Methods
+        # Recognition Methods
         self.device_for_tesseract = "linux" # (windows/linux)
         self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
@@ -50,6 +50,9 @@ class Settings:
         self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
+        
+        # Detection Methods
+        self.detection_method = "simple" # "shape_method" or "dl_method"
 
         # camera setting
         self.width = 1280

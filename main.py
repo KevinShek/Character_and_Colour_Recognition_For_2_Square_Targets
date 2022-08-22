@@ -13,7 +13,6 @@ from collections import Counter
 from detection import detection
 import datetime
 from fractions import Fraction
-from capture_images.set_picamera_gain import set_analog_gain, set_digital_gain
 
 """
 The following code contains the detection of the square target and saves only the inner square data
@@ -101,6 +100,12 @@ def capture_setting():
     start = time.time()
     config = Settings()
     save = Saving(config.name_of_folder, config.exist_ok)
+    
+    if config.detection_method == "shape_method":
+        from shape_detection import detection
+    else:
+        
+      
 
     if config.capture == "pc":
         if config.testing == "video":
@@ -170,6 +175,7 @@ def capture_setting():
     elif config.capture == "pi":
         from picamera.array import PiRGBArray
         from picamera import PiCamera
+        from capture_images.set_picamera_gain import set_analog_gain, set_digital_gain
 
         camera = PiCamera()
         camera.resolution = (config.width, config.height)
