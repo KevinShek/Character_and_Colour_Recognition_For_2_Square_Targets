@@ -177,7 +177,7 @@ if __name__ == '__main__':
       elif opt.test_name == "outdoor_distance":
         list_of_exposure_settings = ["off"]
         list_of_resolutions = ["480p", "720p", "1080p"]
-        list_of_distances = ["0.5","1.0","1.5"]
+        list_of_distances = ["6.06","12.12","18.18","24.24","30.30","36.36","42.42","48.48","54.54","60.60","66.66"]
         character = "target"
         for distance in list_of_distances:
           input(f"Press Enter when you have the drone distance to be {distance} ready!")
