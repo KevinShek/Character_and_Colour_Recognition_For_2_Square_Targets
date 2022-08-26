@@ -30,12 +30,12 @@ def pi_capture(test_name, resolution, distance, character, camera, path_of_folde
         # return
         
         
-    if test_name == "distance_test":
-          camera.capture(f"/home/pi/test/benchmark/{resolution}/{distance}/{character}_{distance}_{resolution}_still_image.png")
+    if test_name == "distance_test" or test_name == "outdoor_distance":
+          camera.capture(f"{path_of_folder}/{character}_{distance}_{resolution}_still_image.png")
     elif test_name == "static_test":
-          camera.capture(f"/home/pi/test/benchmark/static/{character}_{resolution}_still_image.png")
+          camera.capture(f"{path_of_folder}/{character}_{resolution}_still_image.png")
     else:
-          camera.capture(f"/home/pi/test/benchmark/photos/{character}_{resolution}_still_image.png")
+          camera.capture(f"{path_of_folder}/{character}_{resolution}_still_image.png")
           
                
     cap = PiRGBArray(camera, size=(camera.resolution[0], camera.resolution[1]))
@@ -43,12 +43,12 @@ def pi_capture(test_name, resolution, distance, character, camera, path_of_folde
     for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
       frame = image.array
     
-      if test_name == "distance_test":
-          filepath = f"/home/pi/test/benchmark/{resolution}/{distance}/{character}_{distance}_{resolution}_video.png"
+      if test_name == "distance_test" or test_name == "outdoor_distance":
+          filepath = f"{path_of_folder}/{character}_{distance}_{resolution}_video.png"
       elif test_name == "static_test":
-          filepath = f"/home/pi/test/benchmark/static/{character}_{resolution}_video.png"
+          filepath = f"{path_of_folder}/{character}_{resolution}_video.png"
       else:
-          filepath = f"/home/pi/test/benchmark/photos/{character}_{resolution}_video.png"
+          filepath = f"{path_of_folder}/{character}_{resolution}_video.png"
           
       cv2.imwrite(filepath, frame)
       
@@ -174,6 +174,23 @@ if __name__ == '__main__':
                   filewriter.writerow(["Character", "Shutter Speed", "ISO", "Digial Gain", "Analog Gain", "Red Gain", "Blue Gain","Timestamp"])
             camera.exposure_mode = exposure_setting
             pi_capture(opt.test_name, opt.resolution, opt.distance, character, camera, path_of_folder)
+      elif opt.test_name == "outdoor_distance":
+        list_of_exposure_settings = ["off"]
+        list_of_resolutions = ["480p", "720p", "1080p"]
+        list_of_distances = ["0.5","1.0","1.5"]
+        character = "target"
+        for distance in list_of_distances:
+          input(f"Press Enter when you have the drone distance to be {distance} ready!")
+          for resolution in list_of_resolutions:
+            for exposure_setting in list_of_exposure_settings:
+              path_of_folder = Path(Path("benchmark")/"outdoor"/resolution)
+              if distance == "0.5":
+                with open(f'{path_of_folder}/results.csv', 'a') as csvfile:  # making the csv file
+                  filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+                  filewriter.writerow(["Character", "Shutter Speed", "ISO", "Digial Gain", "Analog Gain", "Red Gain", "Blue Gain", "Timestamp"])
+                  print(f"csv was made at {path_of_folder}")
+              pi_capture(opt.test_name, resolution, distance, character, camera, path_of_folder)
+        
     else:
       path_of_folder = Path(Path("benchmark") / "photos")
       pi_capture(opt.test_name, opt.resolution, opt.distance, opt.character, camera, path_of_folder)
