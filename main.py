@@ -10,7 +10,6 @@ import itertools
 from config import Settings
 from saving import Saving
 from collections import Counter
-from detection import detection
 import datetime
 from fractions import Fraction
 
@@ -101,11 +100,12 @@ def capture_setting():
     config = Settings()
     save = Saving(config.name_of_folder, config.exist_ok)
     
-    if config.detection_method == "shape_method":
-        from shape_detection import detection
+    if config.detection_method == "vim3pro_method":
+        from yolov4_detection import loading_model, detection
+        loading_model(config)
     else:
+        from shape_detection import detection
         
-      
 
     if config.capture == "pc":
         if config.testing == "video":

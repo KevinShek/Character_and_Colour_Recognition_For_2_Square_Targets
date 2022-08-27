@@ -24,9 +24,10 @@ from math import sqrt
 # GRID2 = 80 # 640
 
 NUM_CLS = 1
-MAX_BOXES = 300
+MAX_BOXES = 50
 
 CLASSES = "box"
+
 
 def organising_pre_data(data):
 
@@ -289,7 +290,7 @@ def draw(image, boxes, scores, classes):
         right = min(image.shape[1], np.floor(w + 0.5).astype(int))
         bottom = min(image.shape[0], np.floor(h + 0.5).astype(int))
         
-        roi = image[left:bottom, top:right]
+        colour = image[left:bottom, top:right]
         
         # print(f"top,left,right,bottom = {top}, {left}, {right}, {bottom}")
         
@@ -301,38 +302,33 @@ def draw(image, boxes, scores, classes):
                         0.6, (0, 0, 255), 2)
                     
 
-        storing_boxes_data.extend((None, roi, None, None, None, None, possible_target, True))
+        storing_boxes_data.extend((colour, None, None, None, None, None, possible_target, True))
 
     return storing_boxes_data
 
 
-def loading_model(model, image, library, level):
+def loading_model(config):
     from ksnn.api import KSNN
-    level = 0
-    yolo = KSNN('VIM3')
-    print(' |---+ KSNN Version: {} +---| '.format(yolo.get_nn_version()))
+    yolov4 = KSNN('VIM3')
+    print(' |---+ KSNN Version: {} +---| '.format(yolov4.get_nn_version()))
     print('Start init neural network ...')
-    yolo.nn_init(library=library, model=w, level=level)
+    yolov4.nn_init(library=config.library, model=config.model, level=config.level)
+    config.loaded_model = yolov4
     print('Done.')
     
 
-def detection(model, image, library, level, resize):
-    cv_img =  list()
-    img_resized = cv.resize(img, (resize, resize))
-    cv_img.append(img)
-    print('Done.')
+def detection(image, config):
+    cv_img = list()
+    img_resized = cv.resize(image, config.model_input_size)
+    cv_img.append(image)
+    yolov4 = config.loaded_model
 
-    data = np.array([yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)])
-    output = yolov4_post_process(data)
+    data = np.array([yolov4.nn_inference(img_resized, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
+    output = yolov4_post_process(data, config.OBJ_THRESH, config.NMS_THRESH)
     
     if output is not None:
         outputs = output[0].tolist()
         outputs = np.array(outputs)
-        # print(len(outputs))
-        # print(outputs[0])
-        # print(output[0][:4])
-        # print(output[0][4])
-        # print(output[0][5])
         boxes = outputs[:, :4]
         scores = outputs[:,4]
         classes = outputs[:,5]
@@ -396,7 +392,7 @@ if __name__ == '__main__':
     '''
         default input_tensor is 1
     '''
-    data = np.array([yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)])
+    data = np.array([yolov4.nn_inference(img_resized, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)])
     end = time.time()
     print('Done. inference time: ', end - start)
 

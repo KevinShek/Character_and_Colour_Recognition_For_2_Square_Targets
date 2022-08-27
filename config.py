@@ -14,11 +14,11 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "detection_test_tesseract_hsv_video_1080p" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "detection_test_tesseract_hsv_video_720p_dl_method" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/distance_test_garage_constant/1080p"  # video used for testing and has to be in the exact location of the config file
+        self.media = "../datasets/journal_1/distance_test_garage_constant/720p"  # video used for testing and has to be in the exact location of the config file
         # video/target_only.mp4
         # Information
         self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
@@ -45,14 +45,20 @@ class Settings:
         self.device_for_tesseract = "linux" # (windows/linux)
         self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
-        self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently
-        # there is "otsu" or "custom"
+        self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently there is "otsu" or "custom"
         self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
         
         # Detection Methods
-        self.detection_method = "simple" # "shape_method" or "dl_method"
+        self.detection_method = "vim3pro_method" # "shape_method" or "vim3pro_method"
+        self.library = "../weights/yolov4-csp-square-640-640/libnn_yolov4-csp-square-640-640.so" # location of the library
+        self.level = 0
+        self.model = "../weights/yolov4-csp-square-640-640/yolov4-csp-square-640-640.nb" # location of the model
+        self.model_input_size = (640, 640)
+        self.loaded_model = None
+        self.OBJ_THRESH=0.1 
+        self.NMS_THRESH=0.6
 
         # camera setting
         self.width = 1280
