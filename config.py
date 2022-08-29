@@ -42,6 +42,7 @@ class Settings:
         self.shutter_speed = 0
 
         # Recognition Methods
+        self.recognition_method = False
         self.device_for_tesseract = "linux" # (windows/linux)
         self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
@@ -51,10 +52,11 @@ class Settings:
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
         
         # Detection Methods
+        self.detection_only = True
         self.detection_method = "vim3pro_method" # "shape_method" or "vim3pro_method"
-        self.library = "../weights/yolov4-csp-square-640-640/libnn_yolov4-csp-square-640-640.so" # location of the library
+        self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
-        self.model = "../weights/yolov4-csp-square-640-640/yolov4-csp-square-640-640.nb" # location of the model
+        self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
         self.model_input_size = (640, 640)
         self.loaded_model = None
         self.OBJ_THRESH=0.1 

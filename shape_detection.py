@@ -144,6 +144,9 @@ def edge_detection(frame, inner_switch, config):
     if inner_switch == 1:
         blurred_inner = cv2.GaussianBlur(gray, (3, 3), 0)  # blur the gray image for better edge detection
         edged_inner = cv2.Canny(blurred_inner, 5, 5)  # the lower the value the more detailed it would be
+        # kernel = np.ones((3, 3), np.uint8)
+        # img_dilation = cv2.dilate(edged_inner, kernel, iterations=1)
+        # edged_inner = img_dilation
         edged = edged_inner
         if config.Step_camera:
             cv2.imshow('edge_inner', edged_inner)
@@ -183,6 +186,7 @@ def locating_square(contours, edged_copy, config):
             keepAspectRatio = 0.9 <= aspectRatio <= 1.1
             if keepDims and keepSolidity and keepAspectRatio:  # checks if the values are true
                 boxes.extend((x, y, w, h, approx, c))
+                # cv2.imshow("edged_copy", edged_copy)
     # return boxes[0], boxes[1], boxes[2], boxes[3], boxes[4], boxes[5]
     return boxes
 

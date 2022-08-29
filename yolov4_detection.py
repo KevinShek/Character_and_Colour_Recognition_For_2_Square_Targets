@@ -14,6 +14,8 @@ import time
 import torch
 import torchvision
 from math import sqrt
+import math
+import cv2
 
 # GRID0 = 16 # 512
 # GRID1 = 32 # 512
@@ -265,12 +267,84 @@ def yolov4_post_process(data, OBJ_THRESH=0.1, NMS_THRESH=0.6):
 
     return output
 
-def draw(image, boxes, scores, classes):
+
+def validation_of_inner_box_for_vim3pro(image, frame, config):
+    from shape_detection import locating_square, edge_detection
+    inner_switch = 1
+    current_large_area = 0
+    height, width, _ = image.shape
+    print(image.shape)
+    if height < 100 or width < 100:
+        roi = cv2.resize(image, (500, 500))
+    else:
+        roi = image
+    
+    # check if there is a inner square already
+    height, width, _ = roi.shape
+    # print(f"non-cropped roi = {roi.shape}")
+    # cv2.imshow("roi", roi)
+    # cropped_roi = roi[int(height-((height*3/2))):int(height+(height*3/2)), int(width-(width*3/2)):int(width+(width*3/2))]
+    cropped_roi = roi[int(height/5):int(height*4/5), int(width/5):int(width*4/5)]
+    # cv2.imshow("current_roi", cropped_roi)
+    # print(f"cropped roi = {cropped_roi.shape}")
+    # cv2.waitKey(0)
+    
+    edge = edge_detection(cropped_roi, inner_switch, config)
+    (inner_contours, _) = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
+    inner_box = locating_square(inner_contours, edge, config)
+    if len(inner_box) == 0:
+      inner_switch = 0
+      edge = edge_detection(roi, inner_switch, config)
+      (inner_contours, _) = cv2.findContours(edge, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
+      inner_box = locating_square(inner_contours, edge, config)
+      if len(inner_box) == 0:
+          return None, False
+    else:
+      roi = cropped_roi
+        
+    # rotate the square to an upright position
+    height, width, numchannels = roi.shape
+    for i in range(int(len(inner_box)/6)):
+        previous_large_area = inner_box[2+(6*i)] * inner_box[3+(6*i)]
+        if previous_large_area > current_large_area:
+            current_large_area = previous_large_area
+            chosen_i = i
+    centre_region = (inner_box[0+(6*chosen_i)] + inner_box[2+(6*chosen_i)] / 2, inner_box[1+(6*chosen_i)] + inner_box[3+(6*chosen_i)] / 2)
+
+    # grabs the angle for rotation to make the square level
+    angle = abs(cv2.minAreaRect(inner_box[4+(6*chosen_i)])[-1])  # -1 is the angle the rectangle is at
+    # print(f"{centre_region} {angle}")
+    
+    # print(f"angle before = {angle}")
+    
+    if angle == 0.0:
+        angle = angle
+    elif angle == 180 or angle == -180 or angle == 90 or angle == -90:
+        angle = 0.0
+    elif angle > 45:
+        angle = 90 - angle
+    else:
+        angle = angle
+    
+    rotated = cv2.getRotationMatrix2D(tuple(centre_region), angle, 1.0)
+    img_rotated = cv2.warpAffine(roi, rotated, (width, height))  # width and height was changed
+    img_cropped = cv2.getRectSubPix(img_rotated, (inner_box[2+(6*chosen_i)], inner_box[3+(6*chosen_i)]), tuple(centre_region))
+    
+    # cv2.imshow("img_rotated", img_rotated)
+    # cv2.imshow("img_cropped", img_cropped)
+      
+      
+    return img_cropped, True
+    
+
+def draw(image, boxes, scores, classes, config):
     storing_boxes_data = []
+    image_copy = image.copy()
 
     for box, score, cl in zip(boxes, scores, classes):
         possible_target = image.copy()
-        if score < 0.4:
+        frame = image
+        if score < 0.3:
           continue
         x, y, w, h = box
         if w > 1:
@@ -290,19 +364,33 @@ def draw(image, boxes, scores, classes):
         right = min(image.shape[1], np.floor(w + 0.5).astype(int))
         bottom = min(image.shape[0], np.floor(h + 0.5).astype(int))
         
-        colour = image[left:bottom, top:right]
+        colour = image_copy[left:bottom, top:right]
+        
+        height, width, _ = colour.shape
+        
+        if height == 0 or width == 0:
+            continue
+        
+        rotated, valid = validation_of_inner_box_for_vim3pro(colour, image, config)
         
         # print(f"top,left,right,bottom = {top}, {left}, {right}, {bottom}")
         
-        for image_type in [possible_target]:
+        for image_type in [possible_target, frame]:
             cv.rectangle(image_type, (top, left), (right, bottom), (255, 0, 0), 2)
             cv.putText(image_type, f'{CLASSES[cl]} {score:.2f}',
                         (top, left - 6),
                         cv.FONT_HERSHEY_SIMPLEX,
                         0.6, (0, 0, 255), 2)
-                    
 
-        storing_boxes_data.extend((colour, None, None, None, None, None, possible_target, True))
+        # cv2.imshow("frame", frame)
+        # cv2.imshow("colour", colour)
+        # if valid:
+            # cv2.imshow("rotated", rotated)
+        # cv2.waitKey(0)
+        
+        # print(valid)
+
+        storing_boxes_data.extend((rotated, frame, None, None, None, None, possible_target, valid))
 
     return storing_boxes_data
 
@@ -320,21 +408,29 @@ def loading_model(config):
 def detection(image, config):
     cv_img = list()
     img_resized = cv.resize(image, config.model_input_size)
-    cv_img.append(image)
+    cv_img.append(img_resized)
     yolov4 = config.loaded_model
 
-    data = np.array([yolov4.nn_inference(img_resized, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
+    data = np.array([yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
     output = yolov4_post_process(data, config.OBJ_THRESH, config.NMS_THRESH)
+    # print(len(output[0]))
     
-    if output is not None:
+    if output is not None and len(output[0]) != 0:
+        # print(f"before={output}")
         outputs = output[0].tolist()
         outputs = np.array(outputs)
+        # print(len(outputs))
+        # print(f"after={outputs}")
         boxes = outputs[:, :4]
+        # print(boxes)
         scores = outputs[:,4]
         classes = outputs[:,5]
         classes_int = classes.astype(int)
         
-        storing_boxes_data = draw(image, boxes, scores, classes_int)
+        storing_boxes_data = draw(image, boxes, scores, classes_int, config)
+    else:
+        storing_boxes_data = []
+        storing_boxes_data.extend((None, image, None, None, None, None, None, False))
         
     return storing_boxes_data
         
