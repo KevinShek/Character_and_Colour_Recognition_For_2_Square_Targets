@@ -3,6 +3,9 @@
 # base ----------------------------------------
 numpy>=1.18.5
 opencv-python>=4.1.2
+# if you are using the khadas camera use their opencv package that works for their camera
+# https://forum.khadas.com/t/view-simply-camera-opencv4-5/10741/6
+# if you have installed newer version of opencv then the camera does not work with opencv
 # if opencv-python is causing you trouble use the following commented commands in the command line/ Terminal
 # sudo apt update
 # sudo apt install ffmpeg libsm6 libxext6

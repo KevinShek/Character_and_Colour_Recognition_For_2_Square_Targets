@@ -30,7 +30,7 @@ class Settings:
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
-        self.pause = False # captures images until it hits the counter for webcam
+        self.ready_check = False # requires the user to press a button "Enter" to start the rest of the code
         
         # capturing consistent images camera setting
         self.framerate = 30
