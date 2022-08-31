@@ -144,13 +144,15 @@ def pre_processing(resize, config, resize_height, resize_width):
             cv2.imshow("new resize rgb", new_resize_rgb)
             cv2.waitKey(0)
     elif config.preprocess_color == "temperature_colour":
+        from config import Colour
+        kelvin_config = Colour
         _, inverse_otsu = cv2.threshold(gauss, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
         inverse_otsu_converted = cv2.cvtColor(inverse_otsu, cv2.COLOR_GRAY2BGR)
-        list_of_result = [] * len(config.kelvin_list)
-        for i in range(0, len(config.kelvin_list)):
+        list_of_result = [] * len(kelvin_config.kelvin_list)
+        for i in range(0, len(kelvin_config.kelvin_list)):
             b, g, r = cv2.split(anchor_image)
-            kevin_value = config.kelvin_list[i]
-            temp = config.kelvin_table[kevin_value]
+            kevin_value = kelvin_config.kelvin_list[i]
+            temp = kelvin_config.kelvin_table[kevin_value]
             r_temp, g_temp, b_temp = temp
             r = cv2.addWeighted(src1=r, alpha=r_temp/255.0, src2=0, beta=0, gamma=0)
             g = cv2.addWeighted(src1=g, alpha=g_temp/255.0, src2=0, beta=0, gamma=0)
@@ -166,8 +168,8 @@ def pre_processing(resize, config, resize_height, resize_width):
 
         position = np.argmin(list_of_result)
         b, g, r = cv2.split(resize)
-        kevin_value = config.kelvin_list[position]
-        temp = config.kelvin_table[kevin_value]
+        kevin_value = kelvin_config.kelvin_list[position]
+        temp = kelvin_config.kelvin_table[kevin_value]
         r_temp, g_temp, b_temp = temp
         r = cv2.addWeighted(src1=r, alpha=r_temp / 255.0, src2=0, beta=0, gamma=0)
         g = cv2.addWeighted(src1=g, alpha=g_temp / 255.0, src2=0, beta=0, gamma=0)
