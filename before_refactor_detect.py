@@ -40,7 +40,6 @@ def capture_setting():
     val = True
     counter = 1
     marker = 1
-    distance = 0
     predicted_character_list = []
     predicted_color_list = []
     end = time.time()

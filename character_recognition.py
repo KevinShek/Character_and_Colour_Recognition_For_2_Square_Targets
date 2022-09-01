@@ -5,7 +5,7 @@ from collections import Counter
 import operator
 import os
 import pytesseract
-from config import Settings
+from config import Settings, Character
 
 """
 Recognise a white character from an saved image through the method of KNN or tesseract
@@ -44,6 +44,7 @@ class ContourWithData:
 
 def character(img):
     config = Settings()
+    knn_data = Character()
 
     # to initialise tesseract
     if config.device_for_tesseract == "windows":
@@ -70,7 +71,7 @@ def character(img):
 
         knn = cv2.ml.KNearest_create()  # initialise the knn
         # joins the train data with the train_labels
-        knn.train(config.npaFlattenedImages, cv2.ml.ROW_SAMPLE, config.Classifications)
+        knn.train(knn_data.npaFlattenedImages, cv2.ml.ROW_SAMPLE, knn_data.Classifications)
 
         # looks for the 3 nearest neighbours comparing to the flatten images (k = neighbours)
         retval, npaResults, neigh_resp, dists = knn.findNearest(npaROIResized, k=config.knn_value)

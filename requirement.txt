@@ -12,6 +12,8 @@ opencv-python>=4.1.2
 # sudo apt install libatlas-base-dev libjasper-dev
 webcolors
 pytesseract
+matplotlib
+PyYAML
 # if pytesseract doesn't work use the following commented commands in the command line / Terminal
 # sudo apt update
 # sudo apt install tesseract-ocr libtesseract-dev

@@ -7,11 +7,11 @@ import re
 
 
 class Saving:
-    def __init__(self, testing, exist_ok=False):
+    def __init__(self, testing, exist_ok=False, save_image=False):
         # self.save_dir = save_dir
         # Directories
         self.save_dir = Path(self.increment_path(Path("result_dir") / testing, exist_ok=exist_ok))  # increment run
-        (self.save_dir / 'labels' if False else self.save_dir).mkdir(parents=True, exist_ok=True)  # make dir
+        (self.save_dir / 'images' if save_image else self.save_dir).mkdir(parents=True, exist_ok=True)  # make dir
 
 
     def increment_path(self, path, exist_ok=True, sep=''):
@@ -73,6 +73,6 @@ class Saving:
         # file_name = f"{image_name}".rsplit('/', 1)[-1]
 
         # Form full path
-        filepath = os.path.join(self.save_dir, image_name)
+        filepath = os.path.join(f"{self.save_dir}/images", image_name)
         # Write file
         cv2.imwrite(filepath, image)

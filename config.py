@@ -14,17 +14,14 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "detection_test_tesseract_hsv_video_720p_dl_method" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "test" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
-        # Provide a video or dataset you wish to test against
-        self.media = "../datasets/journal_1/distance_test_garage_constant/720p"  # video used for testing and has to be in the exact location of the config file
-        # video/target_only.mp4
-        # Information
-        self.capture = "image"  # "pc" to work with a PC and "pi" to work for a raspberry pi or "image" for a single frame
+        # Provide a video or dataset or webcam
+        self.source = "../datasets/journal_1/raspberry_pi_static_test"
         
         # capture
-        # detection and recognition
+        # detection and recognition test
         self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
         self.testing_set = "video"
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
@@ -42,7 +39,7 @@ class Settings:
         self.shutter_speed = 0
 
         # Recognition Methods
-        self.recognition_method = False
+        self.recognition_method = True
         self.device_for_tesseract = "linux" # (windows/linux)
         self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
@@ -53,23 +50,33 @@ class Settings:
         
         # Detection Methods
         self.detection_only = True
-        self.detection_method = "vim3pro_method" # "shape_method" or "vim3pro_method"
+        self.detection_method = 0 # "shape_method" or "vim3pro_method"
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
-        self.model_input_size = (640, 640)
+        self.model_input_size = 640
         self.loaded_model = None
         self.OBJ_THRESH=0.1 
         self.NMS_THRESH=0.6
+        self.NUM_CLS = 1
+        self.MAX_BOXES = 50
+        self.CLASSES = "box"
 
         # camera setting
         self.width = 1280
         self.height = 720
 
+        # csv title and headings
+        self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]
+        self.title = "Predictions"
+
         # There is 3 option 1, 2, 3. 1 is for the inner square only, 2 is for detecting the outer and inner square,
         # then 3 is detecting the outer square and force cropping to retrieve the inner square.
         self.square = 2
 
+
+class Character:
+    def __init__(self):   
         # character recognition for K-NN
         # Load training and classification data
         npaClassifications = np.loadtxt("classifications_no_rotate.txt", np.float32)
@@ -77,7 +84,10 @@ class Settings:
 
         # reshape classifications array to 1D for k-nn
         self.Classifications = npaClassifications.reshape((npaClassifications.size, 1))
+        
 
+class Colour:
+    def __init__(self):    
         # values for temperature colour correction method
         self.kelvin_table = {
             1000: (255, 56, 0),

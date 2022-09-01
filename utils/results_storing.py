@@ -9,6 +9,8 @@ class Storage:
         with open(self.csv_file, 'a') as csvfile:
             filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
             filewriter.writerow(headings)
+        
+        self.storage_settings()
 
 
     def prediction_results(self, results):
@@ -21,4 +23,10 @@ class Storage:
     def storage_settings(self):
         with open(self.result_dir / 'setting.yaml', 'w') as f:
             yaml.dump(self.config, f, sort_keys=False)
+
+    
+    def write_in_txt(self, text):
+        with open(f'{self.result_dir}/information.txt', 'a') as f:
+            f.write(f"{text}\n")
+        
 

@@ -3,6 +3,8 @@
 General utils
 """
 
+import time
+import contextlib
 import glob
 import logging
 import math
@@ -98,7 +100,7 @@ if platform.system() == 'Windows':
         setattr(LOGGER, fn.__name__, lambda x: fn(emojis(x)))  # emoji safe logging
 
 
-def user_config_dir(dir='Ultralytics', env_var='YOLOV5_CONFIG_DIR'):
+def user_config_dir(dir='Square', env_var='SQUARE_CONFIG_DIR'):
     # Return path of user configuration directory. Prefer environment variable if exists. Make dir if required.
     env = os.getenv(env_var)
     if env:
@@ -113,6 +115,26 @@ def user_config_dir(dir='Ultralytics', env_var='YOLOV5_CONFIG_DIR'):
 
 CONFIG_DIR = user_config_dir()  # Ultralytics settings dir
 
+
+class Profile(contextlib.ContextDecorator):
+    # YOLOv5 Profile class. Usage: @Profile() decorator or 'with Profile():' context manager 
+    # used for timing
+    def __init__(self, t=0.0):
+        self.t = t
+        # self.cuda = False
+
+    def __enter__(self):
+        self.start = self.time()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        self.dt = self.time() - self.start  # delta-time
+        self.t += self.dt  # accumulate dt
+
+    def time(self):
+        # if self.cuda:
+        #     torch.cuda.synchronize()
+        return time.time()
 
 def emojis(str=''):
     # Return platform-dependent emoji-safe version of string
