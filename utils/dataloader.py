@@ -111,12 +111,20 @@ class LoadImages:
 class LoadWebcam:  # for inference
     # local webcam dataloader, i.e. `python detect.py --source 0`
     # for Pi camera refer to: https://stackoverflow.com/a/27956100
-    def __init__(self, pipe='0', img_size=640, stride=32):
+    def __init__(self, config, pipe='0', img_size=640, stride=32):
+        self.config = config
         self.img_size = img_size
         self.stride = stride
         self.pipe = eval(pipe) if pipe.isnumeric() else pipe
         self.cap = cv2.VideoCapture(self.pipe)  # video capture object
         self.cap.set(cv2.CAP_PROP_BUFFERSIZE, 3)  # set buffer size
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, self.config.width)  # setting the width
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height) # setting the height
+        self.cap.set(cv2.CAP_PROP_FPS, 60) # setting the fps
+        time.sleep(2)
+        print("Camera Ready")
+        if self.config.ready_check:
+            input("Are you Ready?")
 
     def __iter__(self):
         self.count = -1
@@ -131,7 +139,7 @@ class LoadWebcam:  # for inference
 
         # Read frame
         ret_val, im0 = self.cap.read()
-        im0 = cv2.flip(im0, 1)  # flip left-right
+        # im0 = cv2.flip(im0, 1)  # flip left-right
 
         # Print
         assert ret_val, f'Camera Error {self.pipe}'

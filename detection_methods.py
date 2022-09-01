@@ -416,6 +416,10 @@ class Detection:
         if self.config.square == 2:
             inner_switch = 1
             new_roi = img_cropped[int((boxes[3] / 2) - (boxes[3] / 3)):int((boxes[3] / 2) + (boxes[3] / 3)), int((boxes[2] / 2) - (boxes[2] / 3)):int((boxes[2] / 2) + (boxes[2] / 3))]
+            height, width, _ = new_roi.shape
+            if height == 0 or width == 0:
+                self.storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))
+                return
             self.edge_detection(new_roi, inner_switch)
             before_edge_search = self.edged.copy()
             (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours

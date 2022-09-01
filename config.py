@@ -18,7 +18,7 @@ class Settings:
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "test_images"
+        self.source = "0"
         
         # capture
         # detection and recognition test
@@ -27,7 +27,7 @@ class Settings:
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
-        self.ready_check = False # requires the user to press a button "Enter" to start the rest of the code
+        self.ready_check = True # requires the user to press a button "Enter" to start the rest of the code
         
         # capturing consistent images camera setting
         self.framerate = 30
@@ -63,8 +63,8 @@ class Settings:
         self.CLASSES = "box"
 
         # camera setting
-        self.width = 1280
-        self.height = 720
+        self.width = 1920
+        self.height = 1080
 
         # csv title and headings
         self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]

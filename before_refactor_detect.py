@@ -70,7 +70,7 @@ def capture_setting():
         seen = 0
         print('Camera on')
         if config.ready_check:
-            distance = input("Are you Ready?")
+            input("Are you Ready?")
         while val:
             if cv2.waitKey(33) == ord('a'):
                 val = False                

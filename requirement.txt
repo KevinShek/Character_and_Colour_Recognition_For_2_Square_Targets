@@ -20,4 +20,5 @@ tqdm
 # sudo apt install tesseract-ocr libtesseract-dev
 
 # For the Pi ----------------------------------
+# https://stackoverflow.com/questions/27950013/i-am-trying-make-the-raspberry-pi-camera-work-with-opencv
 # picamera

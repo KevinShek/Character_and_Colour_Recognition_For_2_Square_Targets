@@ -3,7 +3,7 @@ import character_recognition
 from pathlib import Path
 from config import Settings
 from saving import Saving
-from utils.dataloader import LoadImages, LoadStreams, IMG_FORMATS, VID_FORMATS
+from utils.dataloader import LoadImages, LoadStreams, LoadWebcam, IMG_FORMATS, VID_FORMATS
 from utils.general import LOGGER, Profile, colorstr
 from detection_methods import Detection
 from utils.results_storing import Storage
@@ -33,7 +33,7 @@ def run():
     # Dataloader
     if webcam:
         # view_img = check_imshow()
-        dataset = LoadStreams(source, img_size=config.model_input_size)
+        dataset = LoadWebcam(config, source, img_size=config.model_input_size)
         bs = len(dataset)  # batch_size
     else:
         dataset = LoadImages(source, img_size=config.model_input_size)
@@ -107,6 +107,9 @@ def run():
 
         total_speed = detect_speed + char_speed + colour_speed
         store_speed.prediction_results([str(filename), str(detect_speed), str(char_speed), str(colour_speed), str(total_speed)])
+        
+        if str(filename).isnumeric:
+          filename += 1
 
         print("Target Captured and saved to file")
 
