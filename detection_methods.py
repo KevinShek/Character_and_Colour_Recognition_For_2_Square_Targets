@@ -165,6 +165,8 @@ class Detection:
 
 
     def yolov4_post_process(self, data):
+        # use the command line below for vim3pro
+        # export LD_PRELOAD=/home/khadas/.local/lib/python3.8/site-packages/torch/lib/libgomp-d22c30c5.so.1
         import torch
 
         input_data = self.organising_pre_data(data)
@@ -178,7 +180,7 @@ class Detection:
         boxes, classes, scores = [], [], []
         for input,mask in zip(input_data, masks):
             b, c, s = self.process(input, mask, anchors)
-            b, c, s = self.filter_boxes(b, c, s, self.config.OBJ_THRESH)
+            b, c, s = self.filter_boxes(b, c, s)
             boxes.append(b)
             classes.append(c)
             scores.append(s)
