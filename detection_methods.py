@@ -400,8 +400,14 @@ class Detection:
             angle = 0.0
         elif angle > 45:
             angle = 90 - angle
+        elif self.config.flip_image:
+            if angle < 45:
+                angle = 90 + angle
+            else:
+                angle = angle
         else:
             angle = angle
+        
             
         # new_centre_region = (width/2, height/2)
     

@@ -50,7 +50,7 @@ class Settings:
         
         # Detection Methods
         self.detection_only = True
-        self.detection_method = 0 # "shape_method" or "vim3pro_method"
+        self.detection_method = 1 # shape_method = 0 or vim3pro_method = 1
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
@@ -65,6 +65,7 @@ class Settings:
         # camera setting
         self.width = 1920
         self.height = 1080
+        self.flip_image = True # khadas camera needs to be fliped
 
         # csv title and headings
         self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]
