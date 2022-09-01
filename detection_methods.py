@@ -291,7 +291,7 @@ class Detection:
 
         for box, score, cl in zip(boxes, scores, classes):
             possible_target = self.frame.copy()
-            frame = self.frame
+            current_frame = self.frame
             if score < 0.3:
                 continue
             x, y, w, h = box
@@ -323,14 +323,14 @@ class Detection:
             
             # print(f"top,left,right,bottom = {top}, {left}, {right}, {bottom}")
             
-            for image_type in [possible_target, frame]:
+            for image_type in [possible_target, current_frame]:
                 cv2.rectangle(image_type, (top, left), (right, bottom), (255, 0, 0), 2)
                 cv2.putText(image_type, f'{self.config.CLASSES[cl]} {score:.2f}',
                             (top, left - 6),
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (0, 0, 255), 2)
 
-            self.storing_inner_boxes_data.extend((rotated, frame, None, None, None, None, possible_target, valid))
+            self.storing_inner_boxes_data.extend((rotated, current_frame, colour, None, None, None, possible_target, valid))
 
         return
  
@@ -461,7 +461,7 @@ class Detection:
             cv2.imshow("captured image", self.roi)
             cv2.waitKey(0)
             
-        self.storing_inner_boxes_data.extend((color, roi, self.frame, before_edge_search_outer_square, before_edge_search, self.edged, possible_target, True))
+        self.storing_inner_boxes_data.extend((color, self.frame, roi, before_edge_search_outer_square, before_edge_search, self.edged, possible_target, True))
 
 
     def square_detection(self):

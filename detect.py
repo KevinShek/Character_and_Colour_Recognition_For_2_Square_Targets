@@ -83,7 +83,7 @@ def run():
         # save img
         if save_img:
             for i in range(int(len(detect.storing_inner_boxes_data)/8)):  
-                name_of_results = ["color", "roi", "frame","contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                name_of_results = ["color", "frame", "roi", "contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
                 image_results = [detect.storing_inner_boxes_data[0+(8*i)], detect.storing_inner_boxes_data[1+(8*i)], detect.storing_inner_boxes_data[2+(8*i)], contour_image, processed_image, chosen_image, detect.storing_inner_boxes_data[3+(8*i)], detect.storing_inner_boxes_data[5+(8*i)], detect.storing_inner_boxes_data[6+(8*i)], detect.storing_inner_boxes_data[4+(8*i)]]
                 for value, data in enumerate(name_of_results):
                     image_name = f"{filename}_{data}_{i}.jpg"
