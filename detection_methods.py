@@ -508,7 +508,7 @@ class Detection:
         img_resized = cv2.resize(self.frame, (self.config.model_input_size, self.config.model_input_size))
         cv_img.append(img_resized)
         data = np.array([self.yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
-        output = self.yolov4_post_process(data, self.config.OBJ_THRESH, self.config.NMS_THRESH)
+        output = self.yolov4_post_process(data)
 
         if output is not None and len(output[0]) != 0:
             outputs = output[0].tolist()
