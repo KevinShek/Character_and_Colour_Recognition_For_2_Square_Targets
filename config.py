@@ -50,7 +50,7 @@ class Settings:
         
         # Detection Methods
         self.detection_only = True
-        self.detection_method = 1 # "shape_method" or "vim3pro_method"
+        self.detection_method = 0 # "shape_method" or "vim3pro_method"
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model

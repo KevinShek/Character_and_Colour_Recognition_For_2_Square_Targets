@@ -14,6 +14,7 @@ webcolors
 pytesseract
 matplotlib
 PyYAML
+tqdm
 # if pytesseract doesn't work use the following commented commands in the command line / Terminal
 # sudo apt update
 # sudo apt install tesseract-ocr libtesseract-dev

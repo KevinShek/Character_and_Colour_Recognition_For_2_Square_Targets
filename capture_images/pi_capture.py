@@ -74,6 +74,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='pi_capture.py')
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--constant', action='store_true')
+    parser.add_argument('--indoor', action='store_true')
     parser.add_argument('--test_name', type=str, default="", help='are you doing a distance test')
     parser.add_argument('--resolution', type=str, default='1080p', help='camera resolution')
     parser.add_argument('--distance', type=str, help='what is the distance')
@@ -90,7 +91,11 @@ if __name__ == '__main__':
     # camera.iso = 0
     # camera setting for fixing https://picamera.readthedocs.io/en/release-1.13/recipes1.html#capturing-consistent-images
     camera = PiCamera(framerate=30) # framerate 30 is default value
-    camera.iso = 100 # https://expertphotography.com/indoor-photography-tips/
+    if opt.constant:
+      if opt.indoor:         
+        camera.iso = 100 # https://expertphotography.com/indoor-photography-tips/
+      else:
+        camera.iso = 100 # https://digital-photography-school.com/choosing-right-iso-landscape-photography/
     # camera.awb_mode = "fluorescent"
     time.sleep(2)
     
@@ -106,6 +111,8 @@ if __name__ == '__main__':
           camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
           set_digital_gain(camera, 1)
           set_analog_gain(camera, Fraction(331, 128))
+        else:
+          camera.awb_gains = g
       else:
           camera.awb_gains = g
     
@@ -186,7 +193,10 @@ if __name__ == '__main__':
           input(f"Press Enter when you have the drone distance to be {distance} ready!")
           for resolution in list_of_resolutions:
             for exposure_setting in list_of_exposure_settings:
-              path_of_folder = Path(Path("benchmark")/"outdoor"/resolution)
+              if opt.constant:
+                path_of_folder = Path(Path("benchmark")/"outdoor"/"constant"/resolution)
+              else:
+                path_of_folder = Path(Path("benchmark")/"outdoor"/"not_constant"/resolution)
               if distance == "0.5":
                 with open(f'{path_of_folder}/results.csv', 'a') as csvfile:  # making the csv file
                   filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
