@@ -198,7 +198,7 @@ class Detection:
             c = classes[inds]
             s = scores[inds]
 
-            keep = self.nms_boxes(b, s, self.config.NMS_THRESH)
+            keep = self.nms_boxes(b, s)
 
             nboxes.append(b[keep])
             nclasses.append(c[keep])
@@ -244,6 +244,8 @@ class Detection:
 
 
     def validation_of_inner_box_for_vim3pro(self, image):
+        inner_switch = 1
+        current_large_area = 0
         height, width, _ = image.shape
         print(image.shape)
         if height < 100 or width < 100:
@@ -260,12 +262,12 @@ class Detection:
         
         self.edge_detection(cropped_roi, inner_switch)
         (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
-        inner_box = self.locating_square(inner_contours, self.edged)
+        inner_box = self.locating_square(inner_contours)
         if len(inner_box) == 0:
             inner_switch = 0
         self.edge_detection(roi, inner_switch)
         (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
-        inner_box = self.locating_square(inner_contours, self.edged)
+        inner_box = self.locating_square(inner_contours)
         if len(inner_box) == 0:
             return None, False
         else:
@@ -520,7 +522,7 @@ class Detection:
             classes = outputs[:,5]
             classes_int = classes.astype(int)
             
-            self.storing_inner_boxes_data = self.draw(boxes, scores, classes_int)
+            self.draw(boxes, scores, classes_int)
         else:
             self.storing_inner_boxes_data.extend((None, self.frame, None, None, None, None, None, False))
             
