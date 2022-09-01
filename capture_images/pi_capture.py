@@ -73,6 +73,7 @@ def pi_capture(test_name, resolution, distance, character, camera, path_of_folde
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='pi_capture.py')
     parser.add_argument('--test', action='store_true')
+    parser.add_argument('--constant', action='store_true')
     parser.add_argument('--test_name', type=str, default="", help='are you doing a distance test')
     parser.add_argument('--resolution', type=str, default='1080p', help='camera resolution')
     parser.add_argument('--distance', type=str, help='what is the distance')
@@ -95,16 +96,18 @@ if __name__ == '__main__':
     
     camera.shutter_speed = camera.exposure_speed
     # camera.shutter_speed = int(1E6/camera.framerate) # equvilent to 1/fps (https://picamera.readthedocs.io/en/release-1.13/api_camera.html#picamera.PiCamera.shutter_speed)
-    camera.exposure_mode = 'off'
-    g = camera.awb_gains
-    camera.awb_mode = 'off'
-    if opt.test:
-      if opt.test_name == "distance_test":
-        camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
-        set_digital_gain(camera, 1)
-        set_analog_gain(camera, Fraction(331, 128))
-    else:
-        camera.awb_gains = g
+    
+    if opt.constant:
+      camera.exposure_mode = 'off'
+      g = camera.awb_gains
+      camera.awb_mode = 'off'
+      if opt.test:
+        if opt.test_name == "distance_test":
+          camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
+          set_digital_gain(camera, 1)
+          set_analog_gain(camera, Fraction(331, 128))
+      else:
+          camera.awb_gains = g
     
     """# calbration of camera
     camera.resolution = (1280, 720)

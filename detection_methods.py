@@ -247,7 +247,7 @@ class Detection:
         inner_switch = 1
         current_large_area = 0
         height, width, _ = image.shape
-        print(image.shape)
+        # print(image.shape)
         if height < 100 or width < 100:
             roi = cv2.resize(image, (500, 500))
         else:
@@ -260,16 +260,18 @@ class Detection:
         # cropped_roi = roi[int(height-((height*3/2))):int(height+(height*3/2)), int(width-(width*3/2)):int(width+(width*3/2))]
         cropped_roi = roi[int(height/5):int(height*4/5), int(width/5):int(width*4/5)]
         
+        # checking for inner square
         self.edge_detection(cropped_roi, inner_switch)
         (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
         inner_box = self.locating_square(inner_contours)
         if len(inner_box) == 0:
             inner_switch = 0
-        self.edge_detection(roi, inner_switch)
-        (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
-        inner_box = self.locating_square(inner_contours)
-        if len(inner_box) == 0:
-            return None, False
+            # checking for outer square
+            self.edge_detection(roi, inner_switch)
+            (inner_contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
+            inner_box = self.locating_square(inner_contours)
+            if len(inner_box) == 0:
+                return cropped_roi, False
         else:
             roi = cropped_roi
             
@@ -281,7 +283,7 @@ class Detection:
                 current_large_area = previous_large_area
                 chosen_i = i
 
-        img_cropped = self.rotation_to_upright([inner_box[0+(6*chosen_i)], inner_box[1+(6*chosen_i)], inner_box[2+(6*chosen_i)], inner_box[3+(6*chosen_i)], inner_box[4+(6*chosen_i)], inner_box[5+(6*chosen_i)]])
+        img_cropped = self.rotation_to_upright(roi, [inner_box[0+(6*chosen_i)], inner_box[1+(6*chosen_i)], inner_box[2+(6*chosen_i)], inner_box[3+(6*chosen_i)], inner_box[4+(6*chosen_i)], inner_box[5+(6*chosen_i)]])
         
         return img_cropped, True
         
@@ -381,9 +383,9 @@ class Detection:
         return boxes
     
 
-    def rotation_to_upright(self, boxes):
+    def rotation_to_upright(self, image, boxes):
         # Rotating the square to an upright position
-        height, width, _ = self.frame.shape
+        height, width, _ = image.shape
     
         centre_region = (boxes[0] + boxes[2] / 2, boxes[1] + boxes[3] / 2)
     
@@ -400,9 +402,11 @@ class Detection:
             angle = 90 - angle
         else:
             angle = angle
+            
+        # new_centre_region = (width/2, height/2)
     
         rotated = cv2.getRotationMatrix2D(tuple(centre_region), angle, 1.0)
-        img_rotated = cv2.warpAffine(self.frame, rotated, (width, height))  # width and height was changed
+        img_rotated = cv2.warpAffine(image, rotated, (width, height))  # width and height was changed
         img_cropped = cv2.getRectSubPix(img_rotated, (boxes[2], boxes[3]), tuple(centre_region))
 
         return img_cropped
@@ -492,7 +496,7 @@ class Detection:
         
             roi = self.frame[boxes[1+(6*i)]:boxes[1+(6*i)] + boxes[3+(6*i)], boxes[0+(6*i)]:boxes[0+(6*i)] + boxes[2+(6*i)]]
 
-            img_cropped = self.rotation_to_upright([boxes[0+(6*i)], boxes[1+(6*i)], boxes[2+(6*i)], boxes[3+(6*i)], boxes[4+(6*i)], boxes[5+(6*i)]])
+            img_cropped = self.rotation_to_upright(self.frame, [boxes[0+(6*i)], boxes[1+(6*i)], boxes[2+(6*i)], boxes[3+(6*i)], boxes[4+(6*i)], boxes[5+(6*i)]])
 
             self.square_validation_for_shape(boxes, img_cropped, roi, before_edge_search_outer_square, possible_target)
     

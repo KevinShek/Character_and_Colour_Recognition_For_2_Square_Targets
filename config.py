@@ -18,7 +18,7 @@ class Settings:
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "../datasets/journal_1/raspberry_pi_static_test"
+        self.source = "test_images"
         
         # capture
         # detection and recognition test
@@ -50,7 +50,7 @@ class Settings:
         
         # Detection Methods
         self.detection_only = True
-        self.detection_method = 0 # "shape_method" or "vim3pro_method"
+        self.detection_method = 1 # "shape_method" or "vim3pro_method"
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
