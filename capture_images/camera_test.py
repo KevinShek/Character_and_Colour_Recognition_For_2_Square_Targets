@@ -1,5 +1,6 @@
 import cv2 
 import time
+import argparse
 
 # check the ports you have ls /dev/video*
 # V4L2 or khadas camera currently works for version 4.2.0 of opencv
@@ -52,8 +53,38 @@ def record_video(width, height, fps):
     cap.release()
     out.release()
     
+def capture_images(width, height, fps):
+    
+    val = True
+    count = 0
+
+    cap = cv2.VideoCapture(0)
+    # cap = cv2.VideoCapture(cv2.CAP_V4L2)
+    if  cap.isOpened()== False:
+        print("camera port is inactive")
+    else:
+        print("camera port is active")
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+    cap.set(cv2.CAP_PROP_FPS, fps)
+
+    while val is True:
+        input("Are you Ready?")
+        ret, frame = cap.read()
+        cv2.imwrite(f"{count}.png", frame)
+        cv2.imshow("distorted", frame)
+        cv2.waitKey(0)
+
+
 if __name__ == '__main__':
+    parser = argparse.ArgumentParser(prog='camera_test.py')
+    parser.add_argument('--video', action='store_true')
+    opt = parser.parse_args()
     width = 1920
     height = 1080
     fps = 60
-    record_video(width, height, fps)
+    
+    if opt.video:
+        record_video(width, height, fps)
+    else:
+        capture_images(width, height, fps)
