@@ -13,6 +13,7 @@ from threading import Thread
 from urllib.parse import urlparse
 import numpy as np
 from tqdm import tqdm
+from undistorted_image import undistort_camera, calbrate_distorted_camera_based_on_images
 
 from utils.augmentations import (letterbox)
 from utils.general import (DATASETS_DIR, LOGGER, check_requirements, clean_str, cv2, is_colab, is_kaggle, xywh2xyxy)
@@ -140,7 +141,10 @@ class LoadWebcam:  # for inference
         # Read frame
         ret_val, im0 = self.cap.read()
         if self.config.flip_image:
-          im0 = cv2.flip(im0, 1)  # flip left-right
+            im0 = cv2.flip(im0, 1)  # flip left-right
+        if self.config.distorted_camera:
+            mtx, dist, rvecs, tvecs = calbrate_distorted_camera_based_on_images(self.config.calbrate_distort_camera_path)
+            im0 = undistort_camera(mtx, dist, rvecs, tvecs) # undistort the frame
 
         # Print
         assert ret_val, f'Camera Error {self.pipe}'

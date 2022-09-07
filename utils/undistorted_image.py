@@ -23,27 +23,33 @@ def calbrate_distorted_camera_based_on_images(calbrate_distort_camera_path):
             real_points.append(obj_points)
             corners2 = cv2.cornerSubPix(chess_gray,corners, (11,11), (-1,-1), term_criteria)
             img_points.append(corners)
-            cv2.drawChessboardCorners(chess_img, (7,6), corners2, ret)
-            cv2.imshow('img', chess_img)
-            cv2.waitKey(0)
+            #cv2.drawChessboardCorners(chess_img, (7,6), corners2, ret)
+            #cv2.imshow('img', chess_img)
+            #cv2.waitKey(0)
 
     ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(real_points, img_points, chess_gray.shape[::-1], None, None)
 
     return mtx, dist, rvecs, tvecs
 
 ## undistorting the camera
-def undistort_camera(mtx, dist, rvecs, tvecs):
-    img = cv2.imread('5.png')
-    h,  w = img.shape[:2]
+def undistort_camera(mtx, dist, rvecs, tvecs, frame):
+    # img = cv2.imread(str(Path('OS08A10_distorted_images/21.png')))
+    
+    h,  w = frame.shape[:2]
+    #print(h, w)
     newcameramtx, roi = cv2.getOptimalNewCameraMatrix(mtx, dist, (w,h), 1, (w,h))
-    dst = cv2.undistort(img, mtx, dist, None, newcameramtx)
+    dst = cv2.undistort(frame, mtx, dist, None, newcameramtx)
     x, y, w, h = roi
+    #print(roi)
+    
     dst = dst[y:y+h, x:x+w]
 
-    cv2.imshow('Undistorted Image', dst)
-    cv2.imshow('distorted image', img)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+    #cv2.imshow('Undistorted Image', dst)
+    #cv2.imshow('distorted image', img)
+    #cv2.waitKey(0)
+    #input("ready")
+    #cv2.destroyAllWindows()
+    return frame
 
 if __name__ == "__main__":
     calbrate_distort_camera_path = Path("OS08A10_distorted_images")
