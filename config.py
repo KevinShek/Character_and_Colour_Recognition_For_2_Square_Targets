@@ -66,6 +66,8 @@ class Settings:
         self.width = 1920
         self.height = 1080
         self.flip_image = True # khadas camera needs to be fliped
+        self.calbrate_distort_camera_path = "utils/OS08A10_distorted_images"
+        self.distorted_camera = True
 
         # csv title and headings
         self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]
