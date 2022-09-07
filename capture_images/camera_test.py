@@ -74,6 +74,7 @@ def capture_images(width, height, fps):
         cv2.imwrite(f"{count}.png", frame)
         cv2.imshow("distorted", frame)
         cv2.waitKey(0)
+        count =+ 1
 
 
 if __name__ == '__main__':
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     width = 1920
     height = 1080
     fps = 60
-    
+
     if opt.video:
         record_video(width, height, fps)
     else:
