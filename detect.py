@@ -7,6 +7,7 @@ from utils.dataloader import LoadImages, LoadStreams, LoadWebcam, IMG_FORMATS, V
 from utils.general import LOGGER, Profile, colorstr
 from detection_methods import Detection
 from utils.results_storing import Storage
+import cv2
 
 
 """
@@ -22,6 +23,7 @@ def run():
     source = str(config.source)
     webcam = config.source.isnumeric() or config.source.endswith('.txt') or config.source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://')) or config.source.endswith('.mp4')
     save_img = config.save_results and not source.endswith('.txt')  # save inference images
+    save_vid = config.save_video # save inference video
     is_file = Path(source).suffix[1:] in (IMG_FORMATS + VID_FORMATS)
     is_url = source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://'))
     webcam = source.isnumeric() or source.endswith('.txt') or (is_url and not is_file)
@@ -34,18 +36,26 @@ def run():
     if webcam:
         # view_img = check_imshow()
         dataset = LoadWebcam(config, source, img_size=config.model_input_size)
-        bs = len(dataset)  # batch_size
+        # bs = len(dataset)  # batch_size
+        store_camera_settings = Storage(config, save.save_dir, ["Width", "Height", "FPS", "Brightness", "Contrast", "Saturation", "Hue", "Gain", "Exposure", "ISO", "White Balance", "White Balance's Temperature"], "Camera Settings")
+        camera_settings = [str(dataset.cap.get(cv2.CAP_PROP_FRAME_WIDTH)), str(dataset.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)), str(dataset.cap.get(cv2.CAP_PROP_FPS)), str(dataset.cap.get(cv2.CAP_PROP_BRIGHTNESS)), str(dataset.cap.get(cv2.CAP_PROP_CONTRAST)), 
+        str(dataset.cap.get(cv2.CAP_PROP_SATURATION)), str(dataset.cap.get(cv2.CAP_PROP_HUE)), str(dataset.cap.get(cv2.CAP_PROP_GAIN)), str(dataset.cap.get(cv2.CAP_PROP_EXPOSURE)), str(dataset.cap.get(cv2.CAP_PROP_ISO_SPEED)), str(dataset.cap.get(cv2.CAP_PROP_AUTO_WB)), str(dataset.cap.get(cv2.CAP_PROP_WB_TEMPERATURE))]
+        store_camera_settings.prediction_results(camera_settings)
     else:
         dataset = LoadImages(source, img_size=config.model_input_size)
-        bs = 1  # batch_size
+        # bs = 1  # batch_size
     # vid_path, vid_writer = [None] * bs, [None] * bs
+
+    # setting up the video file
+    if save_vid:
+        save.name_of_output_for_video(config.name_of_folder, dataset.cap, save.save_dir)
 
     # Running Inference
     seen, dt = 0, (Profile(), Profile(), Profile())
     for path, im, im0s, vid_cap, s in dataset:
         predicted_character_list = []
         predicted_color_list = []
-        if not webcam:
+        if not webcam and not save_vid:
             filename = Path(path).stem
         # detection
         with dt[0]:
@@ -62,6 +72,7 @@ def run():
                     if detect.storing_inner_boxes_data[7+(8*i)]: 
                         seen += 1
                         predicted_character, contour_image, chosen_image = character_recognition.character(detect.storing_inner_boxes_data[0+(8*i)])
+                        predicted_character = predicted_character.capitalize()
                         predicted_character_list.append(predicted_character)
                     else:
                         contour_image, chosen_image, predicted_character = None, None, None
@@ -91,6 +102,18 @@ def run():
                         image = image_results[value]
                         if image is not None:
                             save.save_the_image(image_name, image)
+        if save_vid:
+            # save the frame to the video output file
+            save.saving_the_frame(detect.storing_inner_boxes_data[1])
+            for i in range(int(len(detect.storing_inner_boxes_data)/8)):
+                if detect.storing_inner_boxes_data[7+(8*i)]:  
+                    name_of_results = ["color", "frame", "roi", "contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
+                    image_results = [detect.storing_inner_boxes_data[0+(8*i)], detect.storing_inner_boxes_data[1+(8*i)], detect.storing_inner_boxes_data[2+(8*i)], contour_image, processed_image, chosen_image, detect.storing_inner_boxes_data[3+(8*i)], detect.storing_inner_boxes_data[5+(8*i)], detect.storing_inner_boxes_data[6+(8*i)], detect.storing_inner_boxes_data[4+(8*i)]]
+                    for value, data in enumerate(name_of_results):
+                        image_name = f"{filename}_{data}_{i}.jpg"
+                        image = image_results[value]
+                        if image is not None:
+                            save.save_the_image(image_name, image)
 
         # saving csv results
         for i in range(len(predicted_color_list)):
@@ -109,7 +132,7 @@ def run():
         total_speed = detect_speed + char_speed + colour_speed
         store_speed.prediction_results([str(filename), str(detect_speed), str(char_speed), str(colour_speed), str(total_speed)])
         
-        if str(filename).isnumeric:
+        if str(filename).isnumeric():
           filename += 1
 
         print("Target Captured and saved to file")

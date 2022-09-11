@@ -424,7 +424,7 @@ class Detection:
             new_roi = img_cropped[int((boxes[3] / 2) - (boxes[3] / 3)):int((boxes[3] / 2) + (boxes[3] / 3)), int((boxes[2] / 2) - (boxes[2] / 3)):int((boxes[2] / 2) + (boxes[2] / 3))]
             height, width, _ = new_roi.shape
             if height == 0 or width == 0:
-                self.storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))
+                self.storing_inner_boxes_data.extend((_, self.frame, _, _, _, _, _, False))
                 return
             self.edge_detection(new_roi, inner_switch)
             before_edge_search = self.edged.copy()
@@ -438,11 +438,11 @@ class Detection:
             inner_box = self.locating_square(inner_contours)
             if len(inner_box) == 0:
                 if self.config.source.isnumeric() or self.config.source.endswith('.txt') or self.config.source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://')) or self.config.source.endswith('.mp4'):
-                    self.storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))
+                    self.storing_inner_boxes_data.extend((_, self.frame, _, _, _, _, _, False))
                     return
                 else:
                     print("Detection failed to locate the inner square")
-                    self.storing_inner_boxes_data.extend((_, _, _, before_edge_search_outer_square, before_edge_search, self.edged, possible_target, False))
+                    self.storing_inner_boxes_data.extend((_, self.frame, _, before_edge_search_outer_square, before_edge_search, self.edged, possible_target, False))
                     return
 
             
@@ -511,10 +511,10 @@ class Detection:
             self.square_validation_for_shape(boxes, img_cropped, roi, before_edge_search_outer_square, possible_target)
     
         if self.config.source.isnumeric() or self.config.source.endswith('.txt') or self.config.source.lower().startswith(('rtsp://', 'rtmp://', 'http://', 'https://')) or self.config.source.endswith('.mp4'):
-            self.storing_inner_boxes_data.extend((_, _, _, _, _, _, _, False))
+            self.storing_inner_boxes_data.extend((_, self.frame, _, _, _, _, _, False))
             # return _, _, _, _, _, _, _, False
         else:
-            self.storing_inner_boxes_data.extend((_, _, _, before_edge_search_outer_square, _, _, _, False))
+            self.storing_inner_boxes_data.extend((_, self.frame, _, before_edge_search_outer_square, _, _, _, False))
             # return _, _, _, edged_copy, _, _, _, False
             
         # return self.storing_inner_boxes_data

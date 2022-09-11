@@ -14,11 +14,12 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.name_of_folder = "test" # name of the folder that could be found in "result_dir/exp"
+        self.save_video = False # do you want to save video?
+        self.name_of_folder = "video" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "0"
+        self.source = "../datasets/video/FILE_0003.MP4"
         
         # capture
         # detection and recognition test
@@ -50,7 +51,7 @@ class Settings:
         
         # Detection Methods
         self.detection_only = True
-        self.detection_method = 1 # shape_method = 0 or vim3pro_method = 1
+        self.detection_method = 0 # shape_method = 0 or vim3pro_method = 1
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model

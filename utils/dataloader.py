@@ -13,7 +13,7 @@ from threading import Thread
 from urllib.parse import urlparse
 import numpy as np
 from tqdm import tqdm
-from undistorted_image import undistort_camera, calbrate_distorted_camera_based_on_images
+from utils.undistorted_image import undistort_camera, calbrate_distorted_camera_based_on_images
 
 from utils.augmentations import (letterbox)
 from utils.general import (DATASETS_DIR, LOGGER, check_requirements, clean_str, cv2, is_colab, is_kaggle, xywh2xyxy)
@@ -123,6 +123,7 @@ class LoadWebcam:  # for inference
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height) # setting the height
         self.cap.set(cv2.CAP_PROP_FPS, 60) # setting the fps
         time.sleep(2)
+
         print("Camera Ready")
         if self.config.ready_check:
             input("Are you Ready?")
