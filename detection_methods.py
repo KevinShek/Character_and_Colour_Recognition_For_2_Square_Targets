@@ -243,6 +243,80 @@ class Detection:
         return output
 
 
+    def inner_square_for_vim3pro(self, image):
+        cv_img = list()
+        height, width, _ = image.shape
+        roi = cv2.resize(image, (640, 640))
+        cv_img.append(roi)
+        data = np.array([self.yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
+        output = self.yolov4_post_process(data)
+        current_large_area = 0
+        current_index = None
+        current_roi = None
+        inner_switch = 1
+
+        if output is not None and len(output[0]) != 0:
+            outputs = output[0].tolist()
+            outputs = np.array(outputs)
+            boxes = outputs[:, :4]
+
+            for index, box in enumerate(boxes):
+                x, y, w, h = box
+                if w > 1:
+                    w = 1
+                if h > 1:
+                    h = 1
+                x, y = abs(x), abs(y)
+                # print('class: {}, score: {}'.format(CLASSES[cl], score))
+                # print('box coordinate left,top,right,down: [{}, {}, {}, {}]'.format(x, y, w, h))
+                x *= width
+                y *= height
+                w *= width
+                h *= height
+                # print(f"x,y,w,h = {x}, {y}, {w}, {h}")
+                top = max(0, np.floor(x + 0.5).astype(int))
+                left = max(0, np.floor(y + 0.5).astype(int))
+                right = min(width, np.floor(w + 0.5).astype(int))
+                bottom = min(height, np.floor(h + 0.5).astype(int))
+                
+                colour = image_copy[left:bottom, top:right]
+                
+                height, width, _ = colour.shape
+                
+                if height == 0 or width == 0:
+                    continue
+                
+                area = height * width
+                if area > current_large_area:
+                    current_large_area = area
+                    current_index = index
+                    current_roi = colour
+
+            if current_index != None or current_roi != None:
+                self.edge_detection(roi, inner_switch)
+                contours, _ = cv.findContours(self.edged, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+
+                # Find all the contours in the thresholded image
+                largest_area = 0
+                current_angle = 0
+                for i, c in enumerate(contours):
+                    # Calculate the area of each contour
+                    area = cv.contourArea(c)
+
+                    angle = self.getOrientation(contour, current_roi)
+                    if area > largest_area:
+                        largest_area = area
+                        current_angle = angle
+
+                img_cropped = self.rotation_to_upright(current_roi, [top, left, right, bottom, current_angle])
+                
+                return  img_cropped, True
+            else:
+                return None, False
+        else:
+            return None, False
+
+
     def validation_of_inner_box_for_vim3pro(self, image):
         inner_switch = 1
         current_large_area = 0
@@ -335,6 +409,43 @@ class Detection:
             self.storing_inner_boxes_data.extend((rotated, current_frame, colour, None, None, None, possible_target, valid))
 
         return
+
+    
+    def getOrientation(self, pts, img):
+        # https://automaticaddison.com/how-to-determine-the-orientation-of-an-object-using-opencv/
+        ## [pca]
+        # Construct a buffer used by the pca analysis
+        sz = len(pts)
+        data_pts = np.empty((sz, 2), dtype=np.float64)
+        for i in range(data_pts.shape[0]):
+            data_pts[i,0] = pts[i,0,0]
+            data_pts[i,1] = pts[i,0,1]
+        
+        # Perform PCA analysis
+        mean = np.empty((0))
+        mean, eigenvectors, eigenvalues = cv.PCACompute2(data_pts, mean)
+        
+        # Store the center of the object
+        cntr = (int(mean[0,0]), int(mean[0,1]))
+        ## [pca]
+        
+        ## [visualization]
+        # Draw the principal components
+        cv.circle(img, cntr, 3, (255, 0, 255), 2)
+        p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
+        p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
+        drawAxis(img, cntr, p1, (255, 255, 0), 1)
+        drawAxis(img, cntr, p2, (0, 0, 255), 5)
+        
+        angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
+        ## [visualization]
+        
+        # Label with the rotation angle
+        label = "  Rotation Angle: " + str(-int(np.rad2deg(angle)) - 90) + " degrees"
+        textbox = cv.rectangle(img, (cntr[0], cntr[1]-25), (cntr[0] + 250, cntr[1] + 10), (255,255,255), -1)
+        cv.putText(img, label, (cntr[0], cntr[1]), cv.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv.LINE_AA)
+        
+        return angle
  
 
     def edge_detection(self, image, inner_switch):

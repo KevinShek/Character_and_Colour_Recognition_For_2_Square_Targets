@@ -14,7 +14,7 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.save_video = False # do you want to save video?
+        self.save_video = True # do you want to save video?
         self.name_of_folder = "video" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
@@ -66,9 +66,9 @@ class Settings:
         # camera setting
         self.width = 1920
         self.height = 1080
-        self.flip_image = True # khadas camera needs to be fliped
+        self.flip_image = False # khadas camera needs to be fliped
         self.calbrate_distort_camera_path = "utils/OS08A10_distorted_images"
-        self.distorted_camera = True
+        self.distorted_camera = False
 
         # csv title and headings
         self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]

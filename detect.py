@@ -55,6 +55,7 @@ def run():
     for path, im, im0s, vid_cap, s in dataset:
         predicted_character_list = []
         predicted_color_list = []
+        contour_image_list, chosen_image_list, processed_image_list = [], [], []
         if not webcam and not save_vid:
             filename = Path(path).stem
         # detection
@@ -74,8 +75,12 @@ def run():
                         predicted_character, contour_image, chosen_image = character_recognition.character(detect.storing_inner_boxes_data[0+(8*i)])
                         predicted_character = predicted_character.capitalize()
                         predicted_character_list.append(predicted_character)
+                        contour_image_list.append(contour_image)
+                        chosen_image_list.append(chosen_image)
                     else:
-                        contour_image, chosen_image, predicted_character = None, None, None
+                        predicted_character_list.append(None)
+                        contour_image_list.append(None)
+                        chosen_image_list.append(None)
                 else:
                     contour_image, chosen_image, predicted_character = None, None, None       
         
@@ -86,8 +91,10 @@ def run():
                     if detect.storing_inner_boxes_data[7+(8*i)]: 
                         predicted_color, processed_image = colour_recognition.colour(detect.storing_inner_boxes_data[0+(8*i)])
                         predicted_color_list.append(predicted_color)
+                        processed_image_list.append(processed_image)
                     else:
-                        processed_image, predicted_color = None, None
+                        predicted_color_list.append(None)
+                        processed_image_list.append(None)
                 else:
                     processed_image, predicted_color = None, None     
 
@@ -96,7 +103,7 @@ def run():
             for i in range(int(len(detect.storing_inner_boxes_data)/8)):
                 if detect.storing_inner_boxes_data[7+(8*i)]:  
                     name_of_results = ["color", "frame", "roi", "contour_image","processed_image", "chosen_image", "outer_edge", "inner_edge", "possible_target", "before_inner_edge_search"]
-                    image_results = [detect.storing_inner_boxes_data[0+(8*i)], detect.storing_inner_boxes_data[1+(8*i)], detect.storing_inner_boxes_data[2+(8*i)], contour_image, processed_image, chosen_image, detect.storing_inner_boxes_data[3+(8*i)], detect.storing_inner_boxes_data[5+(8*i)], detect.storing_inner_boxes_data[6+(8*i)], detect.storing_inner_boxes_data[4+(8*i)]]
+                    image_results = [detect.storing_inner_boxes_data[0+(8*i)], detect.storing_inner_boxes_data[1+(8*i)], detect.storing_inner_boxes_data[2+(8*i)], contour_image_list[i], processed_image_list[i], chosen_image_list[i], detect.storing_inner_boxes_data[3+(8*i)], detect.storing_inner_boxes_data[5+(8*i)], detect.storing_inner_boxes_data[6+(8*i)], detect.storing_inner_boxes_data[4+(8*i)]]
                     for value, data in enumerate(name_of_results):
                         image_name = f"{filename}_{data}_{i}.jpg"
                         image = image_results[value]
@@ -117,9 +124,10 @@ def run():
 
         # saving csv results
         for i in range(len(predicted_color_list)):
-            print(f"predicted character and colour = {predicted_character_list[i]} and {predicted_color_list[i]}")
-            results = [str(filename), str(i), str(predicted_character_list[i]), str(predicted_color_list[i])]
-            store_results.prediction_results(results)
+            if predicted_color_list[i] != None or predicted_character_list[i] != None:
+                print(f"predicted character and colour = {predicted_character_list[i]} and {predicted_color_list[i]}")
+                results = [str(filename), str(i), str(predicted_character_list[i]), str(predicted_color_list[i])]
+                store_results.prediction_results(results)
 
         detect_speed = dt[0].dt * 1E3
         if len(predicted_character_list) > 0:
@@ -135,7 +143,7 @@ def run():
         if str(filename).isnumeric():
           filename += 1
 
-        print("Target Captured and saved to file")
+        # print("Target Captured and saved to file")
 
     if seen != 0: 
         t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
