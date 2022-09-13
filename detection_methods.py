@@ -296,19 +296,25 @@ class Detection:
 
             if current_index != None or current_roi != None:
                 self.edge_detection(roi, inner_switch)
-                contours, _ = cv.findContours(self.edged, cv.RETR_LIST, cv.CHAIN_APPROX_NONE)
+                contours, _ = cv2.findContours(self.edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
                 # Find all the contours in the thresholded image
                 largest_area = 0
                 current_angle = 0
                 for i, c in enumerate(contours):
                     # Calculate the area of each contour
-                    area = cv.contourArea(c)
+                    area = cv2.contourArea(c)
 
-                    angle = self.getOrientation(contour, current_roi)
+                    # Draw each contour only for visualisation purposes
+                    cv2.drawContours(image, contours, i, (0, 0, 255), 2)
+
+                    angle = self.getOrientation(c, current_roi)
                     if area > largest_area:
                         largest_area = area
                         current_angle = angle
+
+                cv2.imshow('Output Image', image)
+                cv2.waitKey(0)
 
                 img_cropped = self.rotation_to_upright(current_roi, [top, left, right, bottom, current_angle])
                 
