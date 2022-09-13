@@ -421,7 +421,7 @@ class Detection:
         return
 
 
-    def drawAxis(img, p_, q_, color, scale):
+    def drawAxis(self, img, p_, q_, color, scale):
         p = list(p_)
         q = list(q_)
         
@@ -468,8 +468,8 @@ class Detection:
         cv2.circle(img, cntr, 3, (255, 0, 255), 2)
         p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
         p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
-        drawAxis(img, cntr, p1, (255, 255, 0), 1)
-        drawAxis(img, cntr, p2, (0, 0, 255), 5)
+        self.drawAxis(img, cntr, p1, (255, 255, 0), 1)
+        self.drawAxis(img, cntr, p2, (0, 0, 255), 5)
         
         angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
         ## [visualization]
