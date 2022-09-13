@@ -244,6 +244,7 @@ class Detection:
 
 
     def inner_square_for_vim3pro(self, image):
+        from ksnn.types import output_format
         cv_img = list()
         height, width, _ = image.shape
         roi = cv2.resize(image, (640, 640))
@@ -254,6 +255,7 @@ class Detection:
         current_index = None
         current_roi = None
         inner_switch = 1
+        image_copy = self.image.copy()
 
         if output is not None and len(output[0]) != 0:
             outputs = output[0].tolist()
