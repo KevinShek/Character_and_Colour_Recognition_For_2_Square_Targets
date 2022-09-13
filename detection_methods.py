@@ -395,7 +395,9 @@ class Detection:
             if height == 0 or width == 0:
                 continue
             
-            rotated, valid = self.validation_of_inner_box_for_vim3pro(colour)
+            rotated, valid = self.inner_square_for_vim3pro(colour)
+
+            # rotated, valid = self.validation_of_inner_box_for_vim3pro(colour)
             
             # print(f"top,left,right,bottom = {top}, {left}, {right}, {bottom}")
             
