@@ -67,14 +67,18 @@ def capture_images(width, height, fps):
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, width)
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
     cap.set(cv2.CAP_PROP_FPS, fps)
+    time.sleep(2)
+    input("Are you Ready?")
 
     while val is True:
-        input("Are you Ready?")
+        #input("Are you Ready?")
         ret, frame = cap.read()
+        cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
         cv2.imwrite(f"{count}.png", frame)
+        print(f"image number {count} is saved")
+        count = count + 1
         cv2.imshow("distorted", frame)
         cv2.waitKey(0)
-        count =+ 1
 
 
 if __name__ == '__main__':

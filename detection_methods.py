@@ -281,7 +281,9 @@ class Detection:
             boxes = outputs[:, :4]
             scores = outputs[:,4]
 
-            for _, box in enumerate(boxes):
+            for box, score in zip(boxes, scores):
+                possible_target = image.copy()
+                frame = image
                 x, y, w, h = box
                 if w > 1:
                     w = 1
@@ -306,6 +308,13 @@ class Detection:
                 
                 if height == 0 or width == 0:
                     continue
+                    
+                for image_type in [possible_target, frame]:
+                  cv2.rectangle(image_type, (top, left), (right, bottom), (0, 255, 0), 2)
+                  cv2.putText(image_type, f'{score:.2f}',
+                              (top, left - 6),
+                              cv2.FONT_HERSHEY_SIMPLEX,
+                              0.6, (0, 0, 255), 2)
                 
                 area = height * width
                 if area > current_large_area:
@@ -612,11 +621,13 @@ class Detection:
         # Angle correction
         if angle == 180 or angle == -180 or angle == 90 or angle == -90 or angle == 0.0:
             angle = 0.0
-        elif angle < -45:
-            angle += 90
         elif self.config.flip_image:
             if angle < 45:
-                angle -= 90
+                angle += 90
+        else:
+            if angle < -45:
+                angle += 90
+
     
         #if angle == 0.0:
             #angle = angle

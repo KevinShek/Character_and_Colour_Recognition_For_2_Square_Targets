@@ -14,6 +14,10 @@ import cv2
 The following code contains the detection of the square target and saves only the inner square data
 """
 
+class MyClass():
+    def __init__(self, param):
+        self.param = param
+
     
 def run():
     # intialising the key information

@@ -2,8 +2,20 @@ import os
 import cv2
 import numpy as np
 from fractions import Fraction
+from configparser import ConfigParser
+import os
+import pickle
+        
 
-
+def load_object(filename):
+    try:
+        with open(filename, "rb") as f:
+            return pickle.load(f)
+    except Exception as ex:
+        print("Error during unpickling object (Possibly unsupported):", ex)
+        
+        
+        
 class Settings:
     def __init__(self):
         # The steps of the programs
@@ -14,12 +26,12 @@ class Settings:
 
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
-        self.save_video = True # do you want to save video?
-        self.name_of_folder = "video" # name of the folder that could be found in "result_dir/exp"
+        self.save_video = False # do you want to save video?
+        self.name_of_folder = "test" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "../datasets/video/FILE_0003.MP4"
+        self.source = "0"
         
         # capture
         # detection and recognition test
@@ -50,8 +62,8 @@ class Settings:
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
         
         # Detection Methods
-        self.detection_only = True
-        self.detection_method = 0 # shape_method = 0 or vim3pro_method = 1
+        self.detection_only = False
+        self.detection_method = 1 # shape_method = 0 or vim3pro_method = 1
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
@@ -66,9 +78,15 @@ class Settings:
         # camera setting
         self.width = 1920
         self.height = 1080
-        self.flip_image = False # khadas camera needs to be fliped
+        self.flip_image = True # khadas camera needs to be fliped
         self.calbrate_distort_camera_path = "utils/OS08A10_distorted_images"
-        self.distorted_camera = False
+        self.distorted_camera = True
+        if self.distorted_camera:
+            self.mtx = load_object("utils/mtx.pickle")
+            self.dist = load_object("utils/dist.pickle")
+            self.rvecs = load_object("utils/rvecs.pickle")
+            self.tvecs = load_object("utils/tvecs.pickle")
+            
 
         # csv title and headings
         self.headings = ["Filename", "Counter", "Predicted Character", "Predicted Colour"]

@@ -25,6 +25,11 @@ VID_FORMATS = 'asf', 'avi', 'gif', 'm4v', 'mkv', 'mov', 'mp4', 'mpeg', 'mpg', 't
 BAR_FORMAT = '{l_bar}{bar:10}{r_bar}{bar:-10b}'  # tqdm bar format
 
 
+class MyClass():
+    def __init__(self, param):
+        self.param = param
+        
+
 class LoadImages:
     # YOLOv5 image/video dataloader, i.e. `python detect.py --source image.jpg/vid.mp4`
     def __init__(self, path, img_size=640, stride=32, auto=True, transforms=None):
@@ -123,6 +128,8 @@ class LoadWebcam:  # for inference
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, self.config.height) # setting the height
         self.cap.set(cv2.CAP_PROP_FPS, 60) # setting the fps
         time.sleep(2)
+        # if self.config.distorted_camera:
+            # self.mtx, self.dist, self.rvecs, self.tvecs = calbrate_distorted_camera_based_on_images(self.config.calbrate_distort_camera_path)
 
         print("Camera Ready")
         if self.config.ready_check:
@@ -144,8 +151,8 @@ class LoadWebcam:  # for inference
         if self.config.flip_image:
             im0 = cv2.flip(im0, 1)  # flip left-right
         if self.config.distorted_camera:
-            mtx, dist, rvecs, tvecs = calbrate_distorted_camera_based_on_images(self.config.calbrate_distort_camera_path)
-            im0 = undistort_camera(mtx, dist, rvecs, tvecs) # undistort the frame
+            im0 = undistort_camera(self.config.mtx.param, self.config.dist.param, self.config.rvecs.param, self.config.tvecs.param, im0) # undistort the frame
+            cv2.imshow("frame", im0)
 
         # Print
         assert ret_val, f'Camera Error {self.pipe}'

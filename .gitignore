@@ -14,3 +14,4 @@ pipfile.lock
 training_knn/colour
 training_knn/training_rgb.py
 testing.py
+utils/OS08A10_distorted_images
