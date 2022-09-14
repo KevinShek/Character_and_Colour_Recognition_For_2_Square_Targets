@@ -241,7 +241,25 @@ class Detection:
         output[nc-1] = torch.Tensor(temp_list)
 
         return output
+        
 
+    def inner_square_crop(self, image):
+        inner_switch = 0
+        self.edge_detection(image, inner_switch)
+        
+        # find contours in the threshold image and initialize the
+        (contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
+        boxes = self.locating_large_square(contours)
+        # locate the outer box
+        if len(boxes) > 0:
+            roi = image[boxes[1]:boxes[1] + boxes[3], boxes[0]:boxes[0] + boxes[2]]
+            angle = cv2.minAreaRect(boxes[4])[-1]  # -1 is the angle the rectangle is at
+            img_rotated = self.rotation_to_upright(image, [boxes[0], boxes[1], boxes[2], boxes[3], angle, boxes[5]])
+            img_cropped = img_rotated[int((boxes[3] / 2) - (boxes[3] / 4)):int((boxes[3] / 2) + (boxes[3] / 4)), int((boxes[2] / 2) - (boxes[2] / 4)):int((boxes[2] / 2) + (boxes[2] / 4))]
+            return img_cropped, True
+        else:
+            return None, False
+            
 
     def inner_square_for_vim3pro(self, image):
         from ksnn.types import output_format
@@ -252,17 +270,18 @@ class Detection:
         data = np.array([self.yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
         output = self.yolov4_post_process(data)
         current_large_area = 0
-        current_index = None
         current_roi = None
         inner_switch = 1
+        current_contours = None
         image_copy = image.copy()
 
         if output is not None and len(output[0]) != 0:
             outputs = output[0].tolist()
             outputs = np.array(outputs)
             boxes = outputs[:, :4]
+            scores = outputs[:,4]
 
-            for index, box in enumerate(boxes):
+            for _, box in enumerate(boxes):
                 x, y, w, h = box
                 if w > 1:
                     w = 1
@@ -291,11 +310,12 @@ class Detection:
                 area = height * width
                 if area > current_large_area:
                     current_large_area = area
-                    current_index = index
                     current_roi = colour
+                    chosen_box = [top, left, right-top, bottom-left]
 
-            if current_index != None or current_roi != None:
-                self.edge_detection(roi, inner_switch)
+            if current_roi is not None:
+                self.edge_detection(current_roi, inner_switch)
+                
                 contours, _ = cv2.findContours(self.edged, cv2.RETR_LIST, cv2.CHAIN_APPROX_NONE)
 
                 # Find all the contours in the thresholded image
@@ -306,19 +326,33 @@ class Detection:
                     area = cv2.contourArea(c)
 
                     # Draw each contour only for visualisation purposes
-                    cv2.drawContours(image, contours, i, (0, 0, 255), 2)
+                    # cv2.drawContours(current_roi, contours, i, (0, 0, 255), 2)
+                    
+                    if len(c) < 4:
+                      continue
 
                     angle = self.getOrientation(c, current_roi)
                     if area > largest_area:
                         largest_area = area
                         current_angle = angle
-
-                cv2.imshow('Output Image', image)
-                cv2.waitKey(0)
-
-                img_cropped = self.rotation_to_upright(current_roi, [top, left, right, bottom, current_angle])
+                        current_contours = c
                 
-                return  img_cropped, True
+                if current_contours is not None:
+                    angle = cv2.minAreaRect(current_contours)[-1]  # -1 is the angle the rectangle is at
+                                    
+                    chosen_box.extend([angle])
+                        
+                    print(current_angle, angle)
+    
+                    img_cropped = self.rotation_to_upright(image_copy, chosen_box)
+                    
+                    #cv2.imshow('Output Image', current_roi)
+                    #cv2.imshow('image_copy', image_copy)
+                    #cv2.waitKey(0)       
+                    
+                    return  img_cropped, True
+                else:
+                    return None, False
             else:
                 return None, False
         else:
@@ -364,8 +398,10 @@ class Detection:
             if previous_large_area > current_large_area:
                 current_large_area = previous_large_area
                 chosen_i = i
+                
+        angle = cv2.minAreaRect(inner_box[4+(6*chosen_i)])[-1]  # -1 is the angle the rectangle is at
 
-        img_cropped = self.rotation_to_upright(roi, [inner_box[0+(6*chosen_i)], inner_box[1+(6*chosen_i)], inner_box[2+(6*chosen_i)], inner_box[3+(6*chosen_i)], inner_box[4+(6*chosen_i)], inner_box[5+(6*chosen_i)]])
+        img_cropped = self.rotation_to_upright(roi, [inner_box[0+(6*chosen_i)], inner_box[1+(6*chosen_i)], inner_box[2+(6*chosen_i)], inner_box[3+(6*chosen_i)], angle, inner_box[5+(6*chosen_i)]])
         
         return img_cropped, True
         
@@ -376,7 +412,7 @@ class Detection:
         for box, score, cl in zip(boxes, scores, classes):
             possible_target = self.frame.copy()
             current_frame = self.frame
-            if score < 0.3:
+            if score < 0.49:
                 continue
             x, y, w, h = box
             if w > 1:
@@ -403,7 +439,9 @@ class Detection:
             if height == 0 or width == 0:
                 continue
             
-            rotated, valid = self.inner_square_for_vim3pro(colour)
+            rotated, valid = self.inner_square_crop(colour)
+            
+            # rotated, valid = self.inner_square_for_vim3pro(colour)
 
             # rotated, valid = self.validation_of_inner_box_for_vim3pro(colour)
             
@@ -432,16 +470,16 @@ class Detection:
         # Here we lengthen the arrow by a factor of scale
         q[0] = p[0] - scale * hypotenuse * cos(angle)
         q[1] = p[1] - scale * hypotenuse * sin(angle)
-        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv.LINE_AA)
+        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv2.LINE_AA)
         
         # create the arrow hooks
         p[0] = q[0] + 9 * cos(angle + pi / 4)
         p[1] = q[1] + 9 * sin(angle + pi / 4)
-        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv.LINE_AA)
+        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv2.LINE_AA)
         
         p[0] = q[0] + 9 * cos(angle - pi / 4)
         p[1] = q[1] + 9 * sin(angle - pi / 4)
-        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv.LINE_AA)
+        cv2.line(img, (int(p[0]), int(p[1])), (int(q[0]), int(q[1])), color, 3, cv2.LINE_AA)
         ## [visualization1]
 
     
@@ -465,19 +503,20 @@ class Detection:
         
         ## [visualization]
         # Draw the principal components
-        cv2.circle(img, cntr, 3, (255, 0, 255), 2)
-        p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
-        p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
-        self.drawAxis(img, cntr, p1, (255, 255, 0), 1)
-        self.drawAxis(img, cntr, p2, (0, 0, 255), 5)
+        #cv2.circle(img, cntr, 3, (255, 0, 255), 2)
+        #p1 = (cntr[0] + 0.02 * eigenvectors[0,0] * eigenvalues[0,0], cntr[1] + 0.02 * eigenvectors[0,1] * eigenvalues[0,0])
+        #p2 = (cntr[0] - 0.02 * eigenvectors[1,0] * eigenvalues[1,0], cntr[1] - 0.02 * eigenvectors[1,1] * eigenvalues[1,0])
+        #self.drawAxis(img, cntr, p1, (255, 255, 0), 1)
+        #self.drawAxis(img, cntr, p2, (0, 0, 255), 5)
         
-        angle = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
+        angle_radians = atan2(eigenvectors[0,1], eigenvectors[0,0]) # orientation in radians
+        angle = angle_radians * (180/pi)
         ## [visualization]
         
         # Label with the rotation angle
-        label = "  Rotation Angle: " + str(-int(np.rad2deg(angle)) - 90) + " degrees"
-        textbox = cv2.rectangle(img, (cntr[0], cntr[1]-25), (cntr[0] + 250, cntr[1] + 10), (255,255,255), -1)
-        cv2.putText(img, label, (cntr[0], cntr[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv2.LINE_AA)
+        #label = "  Rotation Angle: " + str(-int(np.rad2deg(angle)) - 90) + " degrees"
+        #textbox = cv2.rectangle(img, (cntr[0], cntr[1]-25), (cntr[0] + 250, cntr[1] + 10), (255,255,255), -1)
+        #cv2.putText(img, label, (cntr[0], cntr[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv2.LINE_AA)
         
         return angle
  
@@ -526,32 +565,72 @@ class Detection:
                     # cv2.imshow("edged_copy", edged_copy)
         # return boxes[0], boxes[1], boxes[2], boxes[3], boxes[4], boxes[5]
         return boxes
+        
+
+    def locating_large_square(self, contours):        
+        boxes = []
+        largest_box = 0
+        # outer square
+        for c in contours:
+            peri = cv2.arcLength(c, True)  # grabs the contours of each points to complete a shape
+            # get the approx. points of the actual edges of the corners
+            approx = cv2.approxPolyDP(c, 0.01 * peri, True)
+            cv2.drawContours(self.edged, [approx], -1, (255, 0, 0), 3)
+            if self.config.Step_detection:
+                cv2.imshow("contours_approx", self.edged)
+
+            if 4 <= len(approx) <= 6:
+                (x, y, w, h) = cv2.boundingRect(approx)  # gets the (x,y) of the top left of the square and the (w,h)
+                aspectRatio = w / float(h)  # gets the aspect ratio of the width to height
+                area = cv2.contourArea(c)  # grabs the area of the completed square
+                hullArea = cv2.contourArea(cv2.convexHull(c))
+                solidity = area / float(hullArea)
+                keepDims = w > 10 and h > 10
+                keepSolidity = solidity > 0.9  # to check if it's near to be an area of a square
+                keepAspectRatio = 0.9 <= aspectRatio <= 1.1
+                keep_area = area > largest_box
+                if keepDims and keepSolidity and keepAspectRatio and keep_area:  # checks if the values are true
+                    boxes = [x, y, w, h, approx, c]
+                    largest_box = area
+                    # cv2.imshow("edged_copy", edged_copy)
+        # return boxes[0], boxes[1], boxes[2], boxes[3], boxes[4], boxes[5]
+        return boxes
     
 
     def rotation_to_upright(self, image, boxes):
         # Rotating the square to an upright position
         height, width, _ = image.shape
     
-        centre_region = (boxes[0] + boxes[2] / 2, boxes[1] + boxes[3] / 2)
+        centre_region = (int(boxes[0] + boxes[2] / 2), int(boxes[1] + boxes[3] / 2))
+        
     
         # grabs the angle for rotation to make the square level
-        angle = cv2.minAreaRect(boxes[4])[-1]  # -1 is the angle the rectangle is at
+        angle = boxes[4]
     
         # print(f"angle before = {angle}")
-    
-        if angle == 0.0:
-            angle = angle
-        elif angle == 180 or angle == -180 or angle == 90 or angle == -90:
+        
+        # Angle correction
+        if angle == 180 or angle == -180 or angle == 90 or angle == -90 or angle == 0.0:
             angle = 0.0
-        elif angle > 45:
-            angle = 90 - angle
+        elif angle < -45:
+            angle += 90
         elif self.config.flip_image:
             if angle < 45:
-                angle = 90 + angle
-            else:
-                angle = angle
-        else:
-            angle = angle
+                angle -= 90
+    
+        #if angle == 0.0:
+            #angle = angle
+        #elif angle == 180 or angle == -180 or angle == 90 or angle == -90:
+            #angle = 0.0
+        #elif angle > 45:
+            #angle = 90 - angle
+       # elif self.config.flip_image:
+            #if angle < 45:
+                #angle = 90 + angle
+            #else:
+                #angle = angle
+        #else:
+            #angle = angle
         
             
         # new_centre_region = (width/2, height/2)
@@ -650,8 +729,10 @@ class Detection:
                 cv2.imshow("frame", self.frame)
         
             roi = self.frame[boxes[1+(6*i)]:boxes[1+(6*i)] + boxes[3+(6*i)], boxes[0+(6*i)]:boxes[0+(6*i)] + boxes[2+(6*i)]]
+            
+            angle = cv2.minAreaRect(boxes[4+(6*i)])[-1]  # -1 is the angle the rectangle is at
 
-            img_cropped = self.rotation_to_upright(self.frame, [boxes[0+(6*i)], boxes[1+(6*i)], boxes[2+(6*i)], boxes[3+(6*i)], boxes[4+(6*i)], boxes[5+(6*i)]])
+            img_cropped = self.rotation_to_upright(self.frame, [boxes[0+(6*i)], boxes[1+(6*i)], boxes[2+(6*i)], boxes[3+(6*i)], angle, boxes[5+(6*i)]])
 
             self.square_validation_for_shape(boxes, img_cropped, roi, before_edge_search_outer_square, possible_target)
     
