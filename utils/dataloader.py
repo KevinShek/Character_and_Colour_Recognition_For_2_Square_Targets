@@ -152,7 +152,7 @@ class LoadWebcam:  # for inference
             im0 = cv2.flip(im0, 1)  # flip left-right
         if self.config.distorted_camera:
             im0 = undistort_camera(self.config.mtx.param, self.config.dist.param, self.config.rvecs.param, self.config.tvecs.param, im0) # undistort the frame
-            cv2.imshow("frame", im0)
+            # cv2.imshow("frame", im0)
 
         # Print
         assert ret_val, f'Camera Error {self.pipe}'

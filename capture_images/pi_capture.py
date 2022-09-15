@@ -12,6 +12,39 @@ from fractions import Fraction
 from set_picamera_gain import set_analog_gain, set_digital_gain
 
 
+def capture_video(name, camera):
+    camera.resolution = (1920, 1080)
+    input(f"Are you Ready?")
+    print("Start recording...")
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(f'{name}.mp4', fourcc, 30, (camera.resolution[0], camera.resolution[1]), True)
+    cap = PiRGBArray(camera, size=(camera.resolution[0], camera.resolution[1]))
+    start = time.time()
+    
+    try:
+        for image in camera.capture_continuous(cap, format="bgr", use_video_port=True):
+            frame = image.array
+            # clear the stream in preparation for the next frame
+            cap.truncate(0)
+            if frame is None:
+                continue
+            cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_resize = cv2.resize(frame, (camera.resolution[0], camera.resolution[1]))
+            out.write(frame_resize)
+            c = cv2.waitKey(1)
+            if c & 0xFF == ord('q'):
+                break
+            print(abs(time.time() - start))
+        cap.release()
+        out.release()
+    except KeyboardInterrupt:
+        # clear the stream in preparation for the next frame
+        cap.truncate(0)
+        cap.release()
+        out.release()
+        print("you have exited out of the program")
+    
+
 def pi_capture(test_name, resolution, distance, character, camera, path_of_folder): 
 
     print(f"starting capture of character: {character} for {resolution}")
@@ -75,10 +108,12 @@ if __name__ == '__main__':
     parser.add_argument('--test', action='store_true')
     parser.add_argument('--constant', action='store_true')
     parser.add_argument('--indoor', action='store_true')
+    parser.add_argument('--video', action='store_true')
     parser.add_argument('--test_name', type=str, default="", help='are you doing a distance test')
     parser.add_argument('--resolution', type=str, default='1080p', help='camera resolution')
     parser.add_argument('--distance', type=str, help='what is the distance')
     parser.add_argument('--character', type=str, help='what is the character')
+    parser.add_argument('--skip', type=str, help='value')
     opt = parser.parse_args()
     
     # camera.awb_mode = "auto" # not a good selection as it will adjust accordingly to the environment
@@ -96,10 +131,11 @@ if __name__ == '__main__':
         camera.iso = 100 # https://expertphotography.com/indoor-photography-tips/
       else:
         camera.iso = 100 # https://digital-photography-school.com/choosing-right-iso-landscape-photography/
+        #set_analog_gain(camera, Fraction(259, 256))
     # camera.awb_mode = "fluorescent"
     time.sleep(2)
     
-    camera.shutter_speed = camera.exposure_speed
+    camera.shutter_speed = 1011
     # camera.shutter_speed = int(1E6/camera.framerate) # equvilent to 1/fps (https://picamera.readthedocs.io/en/release-1.13/api_camera.html#picamera.PiCamera.shutter_speed)
     
     if opt.constant:
@@ -111,10 +147,18 @@ if __name__ == '__main__':
           camera.awb_gains = Fraction(151, 107), Fraction(281, 128)
           set_digital_gain(camera, 1)
           set_analog_gain(camera, Fraction(331, 128))
+        #if opt.test_name == "outdoor_distance":
+          #camera.awb_gains = Fraction(237, 128), Fraction(387, 256)
+          #set_digital_gain(camera, 1)
+          #set_analog_gain(camera, Fraction(259, 256))
         else:
           camera.awb_gains = g
       else:
           camera.awb_gains = g
+          
+    
+    if opt.video:
+        capture_video(opt.test_name, camera)
     
     """# calbration of camera
     camera.resolution = (1280, 720)
@@ -187,9 +231,12 @@ if __name__ == '__main__':
       elif opt.test_name == "outdoor_distance":
         list_of_exposure_settings = ["off"]
         list_of_resolutions = ["480p", "720p", "1080p"]
-        list_of_distances = ["6.06","12.12","18.18","24.24","30.30","36.36","42.42","48.48","54.54","60.60","66.66"]
+        list_of_distances = ["6.1","12.2","18.2","24.3","30.4","36.4","42.5","48.5","54.6","60.7","66.7"]           
+        # list_of_distances = ["54.6","60.7","66.7"]
         character = "target"
         for distance in list_of_distances:
+          if opt.skip and float(opt.skip) > float(distance):
+              continue
           input(f"Press Enter when you have the drone distance to be {distance} ready!")
           for resolution in list_of_resolutions:
             for exposure_setting in list_of_exposure_settings:
