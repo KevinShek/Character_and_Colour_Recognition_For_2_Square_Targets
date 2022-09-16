@@ -9,7 +9,6 @@ class Detection:
         if self.config.detection_method == 1:
             self.loading_ksnn_model()
 
-
     def next_frame(self, frame):
         self.frame = frame
         self.storing_inner_boxes_data = []
@@ -246,7 +245,7 @@ class Detection:
     def inner_square_crop(self, image):
         inner_switch = 0
         self.edge_detection(image, inner_switch)
-        
+        self.edged_before_search = self.edged.copy()
         # find contours in the threshold image and initialize the
         (contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
         boxes = self.locating_large_square(contours)
@@ -463,7 +462,7 @@ class Detection:
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (0, 0, 255), 2)
 
-            self.storing_inner_boxes_data.extend((rotated, current_frame, colour, None, None, None, possible_target, valid))
+            self.storing_inner_boxes_data.extend((rotated, current_frame, colour, self.edged_before_search, None, None, possible_target, valid))
 
         return
 
