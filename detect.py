@@ -149,8 +149,14 @@ def run():
 
         # print("Target Captured and saved to file")
 
+    detection_speed = dt[0].t/len(dataset)*1E3
+
     if seen != 0: 
-        t = tuple(x.t / seen * 1E3 for x in dt)  # speeds per image
+        t =[x.t / seen * 1E3 for x in dt]  # speeds per image
+        t = tuple([detection_speed, t[1], t[2]])
+        total_speed = sum(t)
+    else:
+        t = tuple([detection_speed, 0, 0])
         total_speed = sum(t)
 
     text = f'Speed: %.1fms detection, %.1fms character recognition, %.1fms colour recognition per image at shape {(1, 3, (config.model_input_size, config.model_input_size))} total speed: {total_speed}' % t
