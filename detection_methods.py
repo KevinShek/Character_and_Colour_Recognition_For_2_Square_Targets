@@ -2,12 +2,27 @@ import cv2
 import numpy as np
 import time
 from math import sqrt, atan2, cos, sin, pi
+import sys
+from scipy import ndimage
+
+darknet_use = True
+
+if darknet_use == True:
+    # setting path
+    sys.path.append('..')
+    from darknet import darknet
+
+
+
 
 class Detection:
     def __init__(self, config):
         self.config = config
         if self.config.detection_method == 1:
             self.loading_ksnn_model()
+        elif self.config.detection_method == 2:
+            self.loading_darknet_model()
+
 
     def next_frame(self, frame):
         self.frame = frame
@@ -17,6 +32,48 @@ class Detection:
             self.square_detection()
         elif self.config.detection_method == 1:
             self.ksnn_detection()
+        elif self.config.detection_method == 2:
+            self.darknet_detection()
+            
+
+    def loading_darknet_model(self):
+        self.network, self.class_names, self.class_colors = darknet.load_network(config_file=self.config.darknet_cfg, data_file=self.config.darknet_data, weights=self.config.darknet_model_weight, batch_size=1)
+            
+
+    def darknet_detection(self, thresh=0.25):
+        # Darknet doesn't accept numpy images.
+        # Create one with image we reuse for each detect
+        width = darknet.network_width(self.network)
+        height = darknet.network_height(self.network)
+        darknet_image = darknet.make_image(width, height, 3)   
+        image_rgb = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+        image_resized = cv2.resize(image_rgb, (width, height), interpolation=cv2.INTER_LINEAR)
+        
+        darknet.copy_image_from_bytes(darknet_image, image_resized.tobytes())
+        detections = darknet.detect_image(self.network, self.class_names, darknet_image, thresh=thresh)
+        darknet.free_image(darknet_image)
+        frame_with_detections_unconverted = darknet.draw_boxes(detections, image_resized, self.class_colors)
+        frame_with_detections = cv2.cvtColor(frame_with_detections_unconverted, cv2.COLOR_BGR2RGB) 
+            
+        if len(detections) != 0:
+            for label, confidence, bbox in detections:
+                top, left, right, bottom = darknet.bbox2points(bbox)
+                top, left, right, bottom = int(top), int(left), int(right), int(bottom)
+                # print(left, top, right, bottom, confidence)
+                if float(confidence) < 0.49:
+                    continue
+                rgb_colour = image_resized[left:bottom, top:right]
+                height, width, _ = rgb_colour.shape
+                if height == 0 or width == 0:
+                    continue
+                colour = cv2.cvtColor(rgb_colour, cv2.COLOR_RGB2BGR)
+                # requires another post-process to rotate the square target
+                # colour_rotated = self.rotation_upright(colour)
+                rotated = colour[int((height / 2) - (height / 4)):int((height / 2) + (height / 4)), int((width / 2) - (width / 4)):int((width / 2) + (width / 4))]
+                
+                self.storing_inner_boxes_data.extend((rotated, frame_with_detections, colour, None, None, None, None, True))
+        else:
+            self.storing_inner_boxes_data.extend((None, self.frame, None, None, None, None, None, False))
 
 
     def loading_ksnn_model(self):
@@ -245,7 +302,7 @@ class Detection:
     def inner_square_crop(self, image):
         inner_switch = 0
         self.edge_detection(image, inner_switch)
-        self.edged_before_search = self.edged.copy()
+        
         # find contours in the threshold image and initialize the
         (contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
         boxes = self.locating_large_square(contours)
@@ -462,7 +519,7 @@ class Detection:
                             cv2.FONT_HERSHEY_SIMPLEX,
                             0.6, (0, 0, 255), 2)
 
-            self.storing_inner_boxes_data.extend((rotated, current_frame, colour, self.edged_before_search, None, None, possible_target, valid))
+            self.storing_inner_boxes_data.extend((rotated, current_frame, colour, None, None, None, possible_target, valid))
 
         return
 
@@ -603,6 +660,40 @@ class Detection:
                     # cv2.imshow("edged_copy", edged_copy)
         # return boxes[0], boxes[1], boxes[2], boxes[3], boxes[4], boxes[5]
         return boxes
+        
+
+    def rotation_upright(self, image):
+        # https://stackoverflow.com/questions/61609845/detect-angle-and-rotate-image-using-houghline-transform
+        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        edges = cv2.Canny(gray,50,150,apertureSize = 3)
+        # cv2.imshow("edges", edges)
+
+        canimg = cv2.Canny(gray, 50, 200)
+        # cv2.imshow("canimg", canimg)
+        lines = []
+        lines= cv2.HoughLines(canimg, 1, np.pi/180.0, 20, np.array([]))
+        try:      
+            if len(lines) < 0:
+                return image
+        except:
+            return image
+        for line in lines:
+            rho, theta = line[0]
+            a = np.cos(theta)
+            b = np.sin(theta)
+            x0 = a*rho
+            y0 = b*rho
+            x1 = int(x0 + 1000*(-b))
+            y1 = int(y0 + 1000*(a))
+            x2 = int(x0 - 1000*(-b))
+            y2 = int(y0 - 1000*(a))
+        
+            #cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+        print(rho, theta)
+        img_rotated = ndimage.rotate(image, 180*theta/3.1415926)
+        # cv2.imshow("image", image)
+        # cv2.imshow("img_rotated", img_rotated)
+        return img_rotated
     
 
     def rotation_to_upright(self, image, boxes):
