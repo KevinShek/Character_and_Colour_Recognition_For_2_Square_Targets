@@ -145,7 +145,7 @@ class Detection:
         return 1 / (1 + np.exp(-x))
 
 
-    def process(self, input, mask, anchors):
+    def process(self, input, mask, anchors, img_size):
 
         anchors = [anchors[i] for i in mask]
         grid_h, grid_w = map(int, input.shape[0:2])
@@ -168,7 +168,7 @@ class Detection:
 
         box_xy += grid
         box_xy /= (grid_w, grid_h)
-        box_wh /= (416, 416)
+        box_wh /= (img_size[1], img_size[0])
         box_xy -= (box_wh / 2.)
         box = np.concatenate((box_xy, box_wh), axis=-1)
 
@@ -220,7 +220,7 @@ class Detection:
         return keep
 
 
-    def yolov4_post_process(self, data):
+    def yolov4_post_process(self, data, img_size):
         # use the command line below for vim3pro
         # export LD_PRELOAD=/home/khadas/.local/lib/python3.8/site-packages/torch/lib/libgomp-d22c30c5.so.1
         import torch
@@ -235,7 +235,7 @@ class Detection:
 
         boxes, classes, scores = [], [], []
         for input,mask in zip(input_data, masks):
-            b, c, s = self.process(input, mask, anchors)
+            b, c, s = self.process(input, mask, anchors, img_size)
             b, c, s = self.filter_boxes(b, c, s)
             boxes.append(b)
             classes.append(c)
@@ -321,10 +321,11 @@ class Detection:
         from ksnn.types import output_format
         cv_img = list()
         height, width, _ = image.shape
+        img_size = [height, width]
         roi = cv2.resize(image, (640, 640))
         cv_img.append(roi)
         data = np.array([self.yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
-        output = self.yolov4_post_process(data)
+        output = self.yolov4_post_process(data, img_size)
         current_large_area = 0
         current_roi = None
         inner_switch = 1
@@ -850,10 +851,11 @@ class Detection:
     def ksnn_detection(self):
         from ksnn.types import output_format
         cv_img = list()
+        img_size = self.frame.shape[0:2]
         img_resized = cv2.resize(self.frame, (self.config.model_input_size, self.config.model_input_size))
         cv_img.append(img_resized)
         data = np.array([self.yolov4.nn_inference(cv_img, platform='DARKNET', reorder='2 1 0', output_tensor=3, output_format=output_format.OUT_FORMAT_FLOAT32)], dtype="object")
-        output = self.yolov4_post_process(data)
+        output = self.yolov4_post_process(data, img_size)
 
         if output is not None and len(output[0]) != 0:
             outputs = output[0].tolist()
