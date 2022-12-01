@@ -5,12 +5,6 @@ import itertools
 from tqdm import tqdm
 import pickle
 
-
-class MyClass():
-    def __init__(self, param):
-        self.param = param
-        
-
 ## calbrating the distorted camera based on saved images for calbration 
 def calbrate_distorted_camera_based_on_images(calbrate_distort_camera_path):
     term_criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 20, 0.001)
@@ -81,7 +75,7 @@ if __name__ == "__main__":
     img = cv2.imread(str(Path('OS08A10_distorted_images/21.png')))
     mtx, dist, rvecs, tvecs = calbrate_distorted_camera_based_on_images(calbrate_distort_camera_path)
     
-    for obj, name in zip([MyClass(mtx), MyClass(dist), MyClass(rvecs), MyClass(tvecs)], ["mtx", "dist", "rvecs", "tvecs"]):
+    for obj, name in zip([mtx, dist, rvecs, tvecs], ["mtx", "dist", "rvecs", "tvecs"]):
         save_object(name, obj)
     #mtx_text = f"mtx = {mtx}"
     #dist_text = f"dist = {dist}"

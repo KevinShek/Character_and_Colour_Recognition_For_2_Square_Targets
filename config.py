@@ -27,16 +27,17 @@ class Settings:
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
         self.save_video = False # do you want to save video?
-        self.name_of_folder = "hover_shape_detection_on_pi_1080p_constant" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "hover_darknet_pc_1080p_not_constant" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "../datasets/journal_1/hover/outdoor_constant/1080p"
+        self.source = "../datasets/journal_1/hover/outdoor_not_constant/1080p"
         
         # capture
         # detection and recognition test
+        self.capture = "image"
         self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
-        self.testing_set = "video"
+        self.testing_set = "image"
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
@@ -63,10 +64,11 @@ class Settings:
         
         # Detection Methods
         self.detection_only = False
-        self.detection_method = 0 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
-        self.darknet_cfg = "../model/yolov4_leaky/yolov4-leaky-416-square.cfg"
+        self.detection_method = 2 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
+        self.darknet_cfg = "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square.cfg"
         self.darknet_data = "data/square.data"
-        self.darknet_model_weight =  "../model/yolov4_leaky/yolov4-leaky-416-square_best.weights"
+        self.darknet_model_weight =  "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square_best.weights"
+        # Vim3Pro Settings
         self.library = "../weights/yolov4-leaky-square-416-416/libnn_yolov4-leaky-416-416.so" # location of the library
         self.level = 0
         self.model = "../weights/yolov4-leaky-square-416-416/yolov4-leaky-416-416.nb" # location of the model
@@ -81,9 +83,9 @@ class Settings:
         # camera setting
         self.width = 1920
         self.height = 1080
-        self.flip_image = True # khadas camera needs to be fliped
+        self.flip_image = False # khadas camera needs to be fliped
         self.calbrate_distort_camera_path = "utils/OS08A10_distorted_images"
-        self.distorted_camera = True
+        self.distorted_camera = False
         if self.distorted_camera:
             self.mtx = load_object("utils/mtx.pickle")
             self.dist = load_object("utils/dist.pickle")

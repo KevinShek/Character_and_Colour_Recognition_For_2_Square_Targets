@@ -12,10 +12,15 @@ from saving import Saving
 from collections import Counter
 import datetime
 from fractions import Fraction
+from detection_methods import Detection
 
 """
 The following code contains the detection of the square target and saves only the inner square data
 """
+
+class MyClass():
+    def __init__(self, param):
+        self.param = param
 
 
 def solution(counter, marker, predicted_character, predicted_color, result_dir):
@@ -98,18 +103,21 @@ def capture_setting():
     end = time.time()
     start = time.time()
     config = Settings()
-    save = Saving(config.name_of_folder, config.exist_ok)
+    save = Saving(config.name_of_folder, config.exist_ok, are_you_testing = True)
+    detect = Detection(config)
+
+
     
-    if config.detection_method == "vim3pro_method":
-        from yolov4_detection import loading_model, detection
-        loading_model(config)
-    else:
-        from shape_detection import detection
+    # if config.detection_method == "vim3pro_method":
+    #     from yolov4_detection import loading_model, detection
+    #     loading_model(config)
+    # else:
+    #     from shape_detection import detection
         
 
     if config.capture == "camera":
         if config.testing == "video":
-            cap = cv2.VideoCapture(config.media)
+            cap = cv2.VideoCapture(config.source)
         else:
             cap = cv2.VideoCapture(0)
             cap.set(cv2.CAP_PROP_FRAME_WIDTH, config.width)  # 800 default
@@ -136,7 +144,9 @@ def capture_setting():
 
                 start_time_for_detection = time.time()
                 # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(frame, config)
-                storing_inner_boxes_data = detection(frame, config)
+                detect.next_frame(frame)
+                storing_inner_boxes_data = detect.storing_inner_boxes_data
+                # storing_inner_boxes_data = detection(frame, config)
                 end_time_for_detection = time.time() - start_time_for_detection
                 seen_per_image_boolean = 0
                 
@@ -296,7 +306,9 @@ def capture_setting():
                     start_time_for_detection = time.time()
     
                     # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(frame, config)
-                    storing_inner_boxes_data = detection(frame, config)
+                    detect.next_frame(frame)
+                    storing_inner_boxes_data = detect.storing_inner_boxes_data
+                    # storing_inner_boxes_data = detection(frame, config)
                     end_time_for_detection = time.time() - start_time_for_detection
                     seen_per_image_boolean = 0
                     
@@ -442,7 +454,7 @@ def capture_setting():
     elif config.capture == "image":
         if config.testing == " ":
             cap = [] # to store the names of the images
-            data_dir = Path(config.media)
+            data_dir = Path(config.source)
 
             # the following code interite over the extension that exist within a folder and place them into a single list
             image_count = list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png')))
@@ -455,8 +467,9 @@ def capture_setting():
                     marker = Path(name).stem # grabs the name with the extension
 
                     # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
-
-                    storing_inner_boxes_data = detection(test_image, config)
+                    detect.next_frame(test_image)
+                    storing_inner_boxes_data = detect.storing_inner_boxes_data
+                    # storing_inner_boxes_data = detection(test_image, config)
                     
                     for i in range(int(len(storing_inner_boxes_data)/8)):                    
                         if storing_inner_boxes_data[7+(8*i)]:
@@ -483,8 +496,8 @@ def capture_setting():
             print(f"there is a total image count of {len(image_count)} and frames appended {len(cap)}")
 
         if config.testing == "distance_test":
-            data_dir = Path(config.media)
-            resolution_used = f"{config.media}".rsplit('/', 1)[-1] # grabbing the name of the folder name
+            data_dir = Path(config.source)
+            resolution_used = f"{config.source}".rsplit('/', 1)[-1] # grabbing the name of the folder name
 
             with open(f'{save.save_dir}/{resolution_used}_results.csv', 'a') as csvfile:  # making the csv file
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
@@ -505,7 +518,7 @@ def capture_setting():
                 # making internal folders for each distances
                 Path(f"{save.save_dir}/{internal_folder}").mkdir(parents=True, exist_ok=True)
 
-                data_dir = Path(f"{config.media}/{internal_folder}") # path to the images where it is located
+                data_dir = Path(f"{config.source}/{internal_folder}") # path to the images where it is located
                 # the following code interite over the extension that exist within a folder and place them into a single list
                 image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
 
@@ -546,7 +559,9 @@ def capture_setting():
 
                     t = time.time()
                     # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
-                    storing_inner_boxes_data = detection(test_image, config)
+                    detect.next_frame(test_image)
+                    storing_inner_boxes_data = detect.storing_inner_boxes_data
+                    # storing_inner_boxes_data = detection(test_image, config)
                     print(f"number of boxes detected = {len(storing_inner_boxes_data)/8}")
                     # print(storing_inner_boxes_data)      
                     t0 += time.time() - t
@@ -628,7 +643,7 @@ def capture_setting():
             correct_prediction_of_character, correct_prediction_of_colour= 0, 0
             t0, t1, t2 = 0., 0., 0.
             seen = 0
-            data_dir = Path(config.media)
+            data_dir = Path(config.source)
 
             with open(f'{save.save_dir}/{config.name_of_folder}_results.csv', 'a') as csvfile:  # making the csv file
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
@@ -676,6 +691,8 @@ def capture_setting():
 
                 t = time.time()
                 # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
+                detect.next_frame(test_image)
+                storing_inner_boxes_data = detect.storing_inner_boxes_data
                 storing_inner_boxes_data = detection(test_image, config)
                 t0 += time.time() - t
                 seen_per_image_boolean = 0
@@ -729,7 +746,7 @@ def capture_setting():
 
             with open(f'{save.save_dir}/{config.name_of_folder}_results_overall.csv', 'a') as csvfile:  # for testing purposes
                 filewriter = csv.writer(csvfile, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
-                filewriter.writerow([str(Path(config.media).stem), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
+                filewriter.writerow([str(Path(config.source).stem), str(correct_prediction_of_character), str(percentage_of_correct_character), str(correct_prediction_of_colour), str(percentage_of_correct_colour), str(speed[0]), str(speed[1]), str(speed[2]), str(speed[3])])
 
             print(f"percentage_of_correct_character = {percentage_of_correct_character}")
             print(f"percentage_of_correct_colour = {percentage_of_correct_colour}")

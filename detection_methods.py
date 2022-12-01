@@ -10,7 +10,7 @@ darknet_use = True
 if darknet_use == True:
     # setting path
     sys.path.append('..')
-    from darknet import darknet
+    from darknet_yolov4 import darknet
 
 
 
@@ -47,6 +47,7 @@ class Detection:
         height = darknet.network_height(self.network)
         darknet_image = darknet.make_image(width, height, 3)   
         image_rgb = cv2.cvtColor(self.frame, cv2.COLOR_BGR2RGB)
+        orginal_dim = image_rgb.shape[:2]
         image_resized = cv2.resize(image_rgb, (width, height), interpolation=cv2.INTER_LINEAR)
         
         darknet.copy_image_from_bytes(darknet_image, image_resized.tobytes())
@@ -60,18 +61,71 @@ class Detection:
                 top, left, right, bottom = darknet.bbox2points(bbox)
                 top, left, right, bottom = int(top), int(left), int(right), int(bottom)
                 # print(left, top, right, bottom, confidence)
-                if float(confidence) < 0.49:
+                if float(confidence) < 0.25:
                     continue
                 rgb_colour = image_resized[left:bottom, top:right]
-                height, width, _ = rgb_colour.shape
-                if height == 0 or width == 0:
+                height_roi, width_roi, _ = rgb_colour.shape
+                if height_roi == 0 or width_roi == 0:
                     continue
                 colour = cv2.cvtColor(rgb_colour, cv2.COLOR_RGB2BGR)
                 # requires another post-process to rotate the square target
                 # colour_rotated = self.rotation_upright(colour)
-                rotated = colour[int((height / 2) - (height / 4)):int((height / 2) + (height / 4)), int((width / 2) - (width / 4)):int((width / 2) + (width / 4))]
+                new_roi = colour[int((height_roi / 2) - (height_roi * (9 / 20))):int((height_roi / 2) + (height_roi * (9 / 20))), int((width_roi / 2) - (width_roi * (9 / 20))):int((width_roi / 2) + (width_roi * (9 / 20)))] # 45% from inner size to outer size
+                height_cropping_roi, width_cropping_roi, _ = new_roi.shape
+                if height_cropping_roi == 0 or width_cropping_roi == 0:
+                    continue
+                aspect_ratio = width / float(width_roi)
+                aspect_roi = cv2.resize(new_roi, (width, int(aspect_ratio * height_roi)))
+
+                inner_switch = 2
+                self.edge_detection(aspect_roi, inner_switch)
+                before_edge_search_outer_square = self.edged.copy()
+                (contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
+                boxes = self.locating_rectangle(contours)
+                current_large_area = 0
+                for i in range(int(len(boxes)/6)):
+                    previous_large_area = boxes[2+(6*i)] * boxes[3+(6*i)]
+                    if previous_large_area > current_large_area:
+                        current_large_area = previous_large_area
+                        chosen_i = i
                 
-                self.storing_inner_boxes_data.extend((rotated, frame_with_detections, colour, None, None, None, None, True))
+                if len(boxes) == 0:
+                    # if there was no detection of the inner box then a forced crop is done as validation was made already by the confidence of the model to pass through of there being the target.
+                    forced_roi = colour[int((height_roi / 2) - (height_roi * (5 / 20))):int((height_roi / 2) + (height_roi * (5 / 20))), int((width_roi / 2) - (width_roi * (5 / 20))):int((width_roi / 2) + (width_roi * (5 / 20)))] # 25% from inner size to outer size
+                    self.storing_inner_boxes_data.extend((forced_roi, frame_with_detections, colour, self.img_dilation, before_edge_search_outer_square, aspect_roi, None, True))
+                    continue
+            
+                if self.config.Step_camera:
+                    rect = cv2.minAreaRect(boxes[5+(6*chosen_i)])
+                    box = cv2.boxPoints(rect)
+                    box = np.int0(box)
+                    cv2.drawContours(self.frame, [box], 0, (0, 0, 255), 2)
+                    cv2.imshow("frame", self.frame)
+
+                # print(boxes[1+(6*chosen_i)], boxes[3+(6*chosen_i)], boxes[0+(6*chosen_i)], boxes[2+(6*chosen_i)])
+                roi = aspect_roi[boxes[1+(6*chosen_i)]:boxes[1+(6*chosen_i)] + boxes[3+(6*chosen_i)], boxes[0+(6*chosen_i)]:boxes[0+(6*chosen_i)] + boxes[2+(6*chosen_i)]]
+                height_roi_inner, width_roi_inner = roi.shape[:2]
+                if height_roi_inner > width_roi_inner:
+                    roi = cv2.resize(roi, (height_roi_inner, height_roi_inner))
+                else:
+                    roi = cv2.resize(roi, (width_roi_inner, width_roi_inner))
+                # print(height_roi_inner, width_roi_inner)
+                angle = cv2.minAreaRect(boxes[4+(6*chosen_i)])[-1]  # -1 is the angle the rectangle is at
+
+                img_cropped = self.rotation_to_upright(roi, [boxes[0+(6*chosen_i)], boxes[1+(6*chosen_i)], boxes[2+(6*chosen_i)], boxes[3+(6*chosen_i)], angle, boxes[5+(6*chosen_i)]])
+                
+                possible_target = cv2.rectangle(aspect_roi,  # draw rectangle on original testing image
+                        (boxes[0+(6*chosen_i)], boxes[1+(6*chosen_i)]),
+                        # upper left corner
+                        (boxes[0+(6*chosen_i)] + boxes[2+(6*chosen_i)],
+                        boxes[1+(6*chosen_i)] + boxes[3+(6*chosen_i)]),
+                        # lower right corner
+                        (0, 0, 255),  # green
+                        3)
+
+                self.storing_inner_boxes_data.extend((img_cropped, frame_with_detections, colour, self.img_dilation, before_edge_search_outer_square, roi, possible_target, True))
+                # rotated = colour[int((height_roi / 2) - (height_roi / 4)):int((height_roi / 2) + (height_roi / 4)), int((width_roi / 2) - (width_roi / 4)):int((width_roi / 2) + (width_roi / 4))]
+                # self.storing_inner_boxes_data.extend((rotated, frame_with_detections, colour, None, None, None, None, True))
         else:
             self.storing_inner_boxes_data.extend((None, self.frame, None, None, None, None, None, False))
 
@@ -585,7 +639,7 @@ class Detection:
         #cv2.putText(img, label, (cntr[0], cntr[1]), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,0,0), 1, cv2.LINE_AA)
         
         return angle
- 
+    
 
     def edge_detection(self, image, inner_switch):
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)  # converts to gray
@@ -596,7 +650,17 @@ class Detection:
             if self.config.Step_camera:
                 cv2.imshow('edge_inner', edged_inner)
                 cv2.imshow("blurred_inner", blurred_inner)
-
+        elif inner_switch == 2: # for darknet cropping
+            blurred_inner = cv2.GaussianBlur(gray, (3, 3), 0)  # blur the gray image for better edge detection
+            _, self.otsu = cv2.threshold(blurred_inner, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+            kernel = np.ones((5, 5), np.uint8)
+            self.img_erosion = cv2.erode(self.otsu, kernel, iterations=10)
+            self.img_dilation  = cv2.dilate(self.img_erosion, kernel, iterations=10)
+            edged_inner = cv2.Canny(self.img_dilation , 5, 5)  # the lower the value the more detailed it would be
+            self.edged = edged_inner
+            if self.config.Step_camera:
+                cv2.imshow('edge_inner', edged_inner)
+                cv2.imshow("blurred_inner", blurred_inner)
         else:
             blurred_outer = cv2.GaussianBlur(gray, (5, 5), 0)  # blur the gray image for better edge detection
             edged_outer = cv2.Canny(blurred_outer, 20, 20)  # the lower the value the more detailed it would be
@@ -626,6 +690,33 @@ class Detection:
                 keepDims = w > 10 and h > 10
                 keepSolidity = solidity > 0.9  # to check if it's near to be an area of a square
                 keepAspectRatio = 0.9 <= aspectRatio <= 1.1
+                if keepDims and keepSolidity and keepAspectRatio:  # checks if the values are true
+                    boxes.extend((x, y, w, h, approx, c))
+                    # cv2.imshow("edged_copy", edged_copy)
+        # return boxes[0], boxes[1], boxes[2], boxes[3], boxes[4], boxes[5]
+        return boxes
+
+
+    def locating_rectangle(self, contours):
+        boxes = []
+        # outer square
+        for c in contours:
+            peri = cv2.arcLength(c, True)  # grabs the contours of each points to complete a shape
+            # get the approx. points of the actual edges of the corners
+            approx = cv2.approxPolyDP(c, 0.01 * peri, True)
+            cv2.drawContours(self.edged, [approx], -1, (255, 0, 0), 3)
+            if self.config.Step_detection:
+                cv2.imshow("contours_approx", self.edged)
+
+            if 4 <= len(approx) <= 20:
+                (x, y, w, h) = cv2.boundingRect(approx)  # gets the (x,y) of the top left of the square and the (w,h)
+                keepDims = w > 10 and h > 10
+                area = cv2.contourArea(c)  # grabs the area of the completed square
+                hullArea = cv2.contourArea(cv2.convexHull(c))
+                solidity = area / float(hullArea)
+                keepSolidity = solidity > 0.9 # to check if it's near to be an area of a square
+                aspectRatio = w / float(h)  # gets the aspect ratio of the width to height
+                keepAspectRatio = 0.5 <= aspectRatio <= 1.5
                 if keepDims and keepSolidity and keepAspectRatio:  # checks if the values are true
                     boxes.extend((x, y, w, h, approx, c))
                     # cv2.imshow("edged_copy", edged_copy)
@@ -701,7 +792,10 @@ class Detection:
         # Rotating the square to an upright position
         height, width, _ = image.shape
     
-        centre_region = (int(boxes[0] + boxes[2] / 2), int(boxes[1] + boxes[3] / 2))
+        if self.config.detection_method == 2:
+            centre_region = (int(width / 2), int(height / 2))
+        else:
+            centre_region = (int(boxes[0] + boxes[2] / 2), int(boxes[1] + boxes[3] / 2))
         
     
         # grabs the angle for rotation to make the square level
@@ -719,6 +813,14 @@ class Detection:
             if angle < -45:
                 angle += 90
 
+        # print(f"angle after = {angle}")
+
+        if self.config.detection_method == 2:
+            width_for_rotating_the_frame = width
+            height_for_rotating_the_frame = height
+        else:
+            width_for_rotating_the_frame = boxes[2]
+            height_for_rotating_the_frame = boxes[3]
     
         #if angle == 0.0:
             #angle = angle
@@ -739,7 +841,8 @@ class Detection:
     
         rotated = cv2.getRotationMatrix2D(tuple(centre_region), angle, 1.0)
         img_rotated = cv2.warpAffine(image, rotated, (width, height))  # width and height was changed
-        img_cropped = cv2.getRectSubPix(img_rotated, (boxes[2], boxes[3]), tuple(centre_region))
+        img_cropped = cv2.getRectSubPix(img_rotated, (width_for_rotating_the_frame, height_for_rotating_the_frame), tuple(centre_region))
+        # img_cropped = cv2.getRectSubPix(img_rotated, (boxes[2], boxes[3]), tuple(centre_region)) # this is expecting an all equal side square
 
         return img_cropped
 
