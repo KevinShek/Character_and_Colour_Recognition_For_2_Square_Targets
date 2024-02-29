@@ -3,7 +3,7 @@ import numpy as np
 import time
 from math import sqrt, atan2, cos, sin, pi
 import sys
-from scipy import ndimage
+# from scipy import ndimage
 
 darknet_use = True
 
@@ -754,38 +754,38 @@ class Detection:
         return boxes
         
 
-    def rotation_upright(self, image):
-        # https://stackoverflow.com/questions/61609845/detect-angle-and-rotate-image-using-houghline-transform
-        gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        edges = cv2.Canny(gray,50,150,apertureSize = 3)
-        # cv2.imshow("edges", edges)
+    # def rotation_upright(self, image):
+    #     # https://stackoverflow.com/questions/61609845/detect-angle-and-rotate-image-using-houghline-transform
+    #     gray = cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+    #     edges = cv2.Canny(gray,50,150,apertureSize = 3)
+    #     # cv2.imshow("edges", edges)
 
-        canimg = cv2.Canny(gray, 50, 200)
-        # cv2.imshow("canimg", canimg)
-        lines = []
-        lines= cv2.HoughLines(canimg, 1, np.pi/180.0, 20, np.array([]))
-        try:      
-            if len(lines) < 0:
-                return image
-        except:
-            return image
-        for line in lines:
-            rho, theta = line[0]
-            a = np.cos(theta)
-            b = np.sin(theta)
-            x0 = a*rho
-            y0 = b*rho
-            x1 = int(x0 + 1000*(-b))
-            y1 = int(y0 + 1000*(a))
-            x2 = int(x0 - 1000*(-b))
-            y2 = int(y0 - 1000*(a))
+    #     canimg = cv2.Canny(gray, 50, 200)
+    #     # cv2.imshow("canimg", canimg)
+    #     lines = []
+    #     lines= cv2.HoughLines(canimg, 1, np.pi/180.0, 20, np.array([]))
+    #     try:      
+    #         if len(lines) < 0:
+    #             return image
+    #     except:
+    #         return image
+    #     for line in lines:
+    #         rho, theta = line[0]
+    #         a = np.cos(theta)
+    #         b = np.sin(theta)
+    #         x0 = a*rho
+    #         y0 = b*rho
+    #         x1 = int(x0 + 1000*(-b))
+    #         y1 = int(y0 + 1000*(a))
+    #         x2 = int(x0 - 1000*(-b))
+    #         y2 = int(y0 - 1000*(a))
         
-            #cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
-        print(rho, theta)
-        img_rotated = ndimage.rotate(image, 180*theta/3.1415926)
-        # cv2.imshow("image", image)
-        # cv2.imshow("img_rotated", img_rotated)
-        return img_rotated
+    #         #cv2.line(image,(x1,y1),(x2,y2),(0,0,255),2)
+    #     print(rho, theta)
+    #     img_rotated = ndimage.rotate(image, 180*theta/3.1415926)
+    #     # cv2.imshow("image", image)
+    #     # cv2.imshow("img_rotated", img_rotated)
+    #     return img_rotated
     
 
     def rotation_to_upright(self, image, boxes):
