@@ -67,7 +67,10 @@ def character(img):
     img_thresh_copy = pre_processing(img, config).copy()
 
     if config.character == "knn":
-        npaROIResized = area_of_region_of_interest(img_thresh_copy, config)
+        npaROIResized, no_valid_contours = area_of_region_of_interest(img_thresh_copy, config)
+
+        if no_valid_contours:
+            return "None", img_thresh_copy, npaROIResized 
 
         knn = cv2.ml.KNearest_create()  # initialise the knn
         # joins the train data with the train_labels
@@ -325,6 +328,9 @@ def area_of_region_of_interest(img_thresh_copy, config):
     validContoursWithData.sort(key=operator.attrgetter("intRectX"))  # sort contours from left to right
     validContoursWithData = remove_inner_overlapping_chars(validContoursWithData)  # removes overlapping letters
 
+    if len(validContoursWithData) == 0:
+        return None, True
+
     for contourWithData in validContoursWithData:  # for each contour
         # new = cv2.cvtColor(cv2.rectangle(img,  # draw rectangle on original testing image
         #                                  (contourWithData.intRectX, contourWithData.intRectY),
@@ -354,4 +360,4 @@ def area_of_region_of_interest(img_thresh_copy, config):
             cv2.waitKey(0)
         # end if
 
-    return npaROIResized
+    return npaROIResized, False

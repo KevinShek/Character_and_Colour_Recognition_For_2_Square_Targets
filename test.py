@@ -654,38 +654,44 @@ def capture_setting():
 
             # the following code interite over the extension that exist within a folder and place them into a single list
             image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
-            # image_count = len(list(data_dir.glob('*.jpg')))
+            # image_count = len(list(data_dir.glob('*.png')))
             for name in image_count:
                 # head, tail = ntpath.split(name)
                 filename = Path(name)  # .stem removes the extension and .name grabs the filename with extension
                 name_of_image = filename.stem
                 # print(name_of_image)
-                actual_character = f"{name_of_image}".rsplit('_', 5)[0]
-                option = f"{name_of_image}".rsplit('_', 5)[-1]
+                if config.custom_results:
+                    actual_character = config.hover_character
+                    actual_colour = config.hover_colour
+                    cap.append(filename) # append the path of the images to the list
 
-                if option != config.testing_set:
-                    continue # skips the current iteration
-
-                cap.append(filename) # append the path of the images to the list
-
-                if config.colour == "hsv":
-                    dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
-                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
-                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
-                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
-                elif config.colour == "rgb":
-                    dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
-                        'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
-                        'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
-                        'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
                 else:
-                    print("please choose hsv or rgb")
-                    break
+                    actual_character = f"{name_of_image}".rsplit('_', 5)[0]
+                    option = f"{name_of_image}".rsplit('_', 5)[-1]
 
-                list_of_character = list(dict_of_colour_with_character.keys())
-                list_of_colour = list(dict_of_colour_with_character.values())
+                    if option != config.testing_set:
+                        continue # skips the current iteration
+                        
+                    cap.append(filename) # append the path of the images to the list
 
-                actual_colour = list_of_colour[list_of_character.index(str(actual_character))]
+                    if config.colour == "hsv":
+                        dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                            'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                            'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                            'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
+                    elif config.colour == "rgb":
+                        dict_of_colour_with_character = {'1': "red", '2': "green", '3': "blue", '4': "red", '5': "green", '6': "blue", '7': "red", '8': "green", '9': "blue", 
+                            'A': "red", 'B': "green", 'C': "blue", 'D': "red", 'E': "green", 'F': "blue", 'G': "red", 'H': "green", 'I': "blue",'J': "red", 
+                            'K': "green", 'L': "blue", 'M': "red", 'N': "green", 'O': "blue", 'P': "red", 'Q': "green", 'R': "blue", 'S': "red", 
+                            'T': "green", 'U': "blue", 'V': "red", 'W': "green", 'X': "blue", 'Y': "red", 'Z': "green"}
+                    else:
+                        print("please choose hsv or rgb")
+                        break
+
+                    list_of_character = list(dict_of_colour_with_character.keys())
+                    list_of_colour = list(dict_of_colour_with_character.values())
+
+                    actual_colour = list_of_colour[list_of_character.index(str(actual_character))]
 
                 test_image = cv2.imread(str(filename))
 
@@ -693,7 +699,7 @@ def capture_setting():
                 # color, roi, frame, outer_edge, before_inner_edge_search, inner_edge, possible_target, success = detection(test_image, config)
                 detect.next_frame(test_image)
                 storing_inner_boxes_data = detect.storing_inner_boxes_data
-                storing_inner_boxes_data = detection(test_image, config)
+                # storing_inner_boxes_data = detection(test_image, config)
                 t0 += time.time() - t
                 seen_per_image_boolean = 0
 
@@ -701,7 +707,8 @@ def capture_setting():
                     if storing_inner_boxes_data[7+(8*i)]:
                         if seen_per_image_boolean == 0:
                             seen += 1
-                            seen_per_image_boolean = 1
+                            if not config.custom_results:
+                                seen_per_image_boolean = 1
                             t = time.time()
                             predicted_character, contour_image, chosen_image = character_recognition.character(storing_inner_boxes_data[0+(8*i)])
                             predicted_character = predicted_character.capitalize()
@@ -715,7 +722,7 @@ def capture_setting():
                             if predicted_color == actual_colour:
                                 correct_prediction_of_colour += 1
                             
-                            results_of_static_test(filename, predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
+                            results_of_static_test(f"{name_of_image}_{i}", predicted_character, predicted_color, actual_character, actual_colour, save.save_dir, config)
                     
                     else:
                         contour_image = None

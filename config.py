@@ -27,17 +27,20 @@ class Settings:
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
         self.save_video = False # do you want to save video?
-        self.name_of_folder = "hover_darknet_pc_1080p_not_constant" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "static_knn_rgb_video" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "../datasets/journal_1/hover/outdoor_not_constant/1080p"
+        self.source = "../datasets/journal_1/raspberry_pi_static_test"
         
         # capture
         # detection and recognition test
         self.capture = "image"
-        self.testing = "distance_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
-        self.testing_set = "image"
+        self.testing = "static_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
+        self.custom_results = False # for changing static to hover
+        self.hover_character = "X" # selected character
+        self.hover_colour = "red" # selected colour
+        self.testing_set = "video"
         self.distance = "4.5"  # this is to set the chosen distance for the real-time detection test
         self.real_time_character = "A"  # this is to set the chosen character you have for character recognition to compare against during real-time detection test
         self.real_time_colour = "red" # this is to set the chosen colour you have for colour recognition to compare against during real-time detection test
@@ -55,16 +58,16 @@ class Settings:
         # Recognition Methods
         self.recognition_method = True
         self.device_for_tesseract = "linux" # (windows/linux)
-        self.character = "tesseract"  # for character recognition there is currently 2 setting "knn" or "tesseract"
+        self.character = "knn"  # for character recognition there is currently 2 setting "knn" or "tesseract"
         self.knn_value = 3  # the knn value used for knn process (only odd positive number works)
         self.preprocess_character = "otsu"  # this is the threshold before it is feed into character recognition method currently there is "otsu" or "custom"
-        self.colour = "hsv"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
+        self.colour = "rgb"  # for colour recognition there is currently 2 setting "rgb" or "hsv"
         self.preprocess_color = ""  # the pre processing on normalising the colour by the use of character as
         # an anchor for actual white there are 4 options, "rgb_difference", "hsv_difference", "temperature_colour", " "
         
         # Detection Methods
         self.detection_only = False
-        self.detection_method = 2 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
+        self.detection_method = 0 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
         self.darknet_cfg = "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square.cfg"
         self.darknet_data = "data/square.data"
         self.darknet_model_weight =  "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square_best.weights"
