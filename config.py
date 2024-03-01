@@ -27,17 +27,17 @@ class Settings:
         # Saving the data depending on the situation, only one of the 3 settings can be set true at a time
         self.save_results = True  # to allow saving to occur
         self.save_video = False # do you want to save video?
-        self.name_of_folder = "static_knn_rgb_video" # name of the folder that could be found in "result_dir/exp"
+        self.name_of_folder = "hover_knn_rgb_1080p_constant_no_rotation" # name of the folder that could be found in "result_dir/exp"
         self.exist_ok = False # it would save the content into the same name of folder if it exist within result_dir
 
         # Provide a video or dataset or webcam
-        self.source = "../datasets/journal_1/raspberry_pi_static_test"
+        self.source = "../datasets/journal_1/hover/outdoor_constant/1080p"
         
         # capture
         # detection and recognition test
         self.capture = "image"
         self.testing = "static_test"  # are you testing on a video on a PC? (video) or are you testing series of images? (distance_test/static_test/none)
-        self.custom_results = False # for changing static to hover
+        self.custom_results = True # for changing static to hover
         self.hover_character = "X" # selected character
         self.hover_colour = "red" # selected colour
         self.testing_set = "video"
@@ -67,7 +67,8 @@ class Settings:
         
         # Detection Methods
         self.detection_only = False
-        self.detection_method = 0 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
+        self.forced_crop = False
+        self.detection_method = 2 # shape_method = 0 or vim3pro_method = 1 or darknet_method = 2
         self.darknet_cfg = "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square.cfg"
         self.darknet_data = "data/square.data"
         self.darknet_model_weight =  "../weights/square/yolov4-leaky-416-22-08-2022/yolov4-leaky-416-square_best.weights"

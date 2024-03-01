@@ -83,24 +83,25 @@ class Detection:
                 (contours, _) = cv2.findContours(self.edged, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # grabs contours
                 boxes = self.locating_rectangle(contours)
                 current_large_area = 0
+
                 for i in range(int(len(boxes)/6)):
                     previous_large_area = boxes[2+(6*i)] * boxes[3+(6*i)]
                     if previous_large_area > current_large_area:
                         current_large_area = previous_large_area
                         chosen_i = i
-                
-                if len(boxes) == 0:
-                    # if there was no detection of the inner box then a forced crop is done as validation was made already by the confidence of the model to pass through of there being the target.
-                    forced_roi = colour[int((height_roi / 2) - (height_roi * (5 / 20))):int((height_roi / 2) + (height_roi * (5 / 20))), int((width_roi / 2) - (width_roi * (5 / 20))):int((width_roi / 2) + (width_roi * (5 / 20)))] # 25% from inner size to outer size
-                    self.storing_inner_boxes_data.extend((forced_roi, frame_with_detections, colour, self.img_dilation, before_edge_search_outer_square, aspect_roi, None, True))
-                    continue
-            
+
                 if self.config.Step_camera:
                     rect = cv2.minAreaRect(boxes[5+(6*chosen_i)])
                     box = cv2.boxPoints(rect)
                     box = np.int0(box)
                     cv2.drawContours(self.frame, [box], 0, (0, 0, 255), 2)
                     cv2.imshow("frame", self.frame)
+
+                if len(boxes) == 0 or self.config.forced_crop:
+                    # if there was no detection of the inner box then a forced crop is done as validation was made already by the confidence of the model to pass through of there being the target.
+                    forced_roi = colour[int((height_roi / 2) - (height_roi * (5 / 20))):int((height_roi / 2) + (height_roi * (5 / 20))), int((width_roi / 2) - (width_roi * (5 / 20))):int((width_roi / 2) + (width_roi * (5 / 20)))] # 25% from inner size to outer size
+                    self.storing_inner_boxes_data.extend((forced_roi, frame_with_detections, colour, self.img_dilation, before_edge_search_outer_square, aspect_roi, None, True))
+                    continue
 
                 # print(boxes[1+(6*chosen_i)], boxes[3+(6*chosen_i)], boxes[0+(6*chosen_i)], boxes[2+(6*chosen_i)])
                 roi = aspect_roi[boxes[1+(6*chosen_i)]:boxes[1+(6*chosen_i)] + boxes[3+(6*chosen_i)], boxes[0+(6*chosen_i)]:boxes[0+(6*chosen_i)] + boxes[2+(6*chosen_i)]]
