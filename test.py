@@ -457,7 +457,10 @@ def capture_setting():
             data_dir = Path(config.source)
 
             # the following code interite over the extension that exist within a folder and place them into a single list
-            image_count = list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png')))
+            # sorts the list based on the category they are in "still_image" then "video" afterwards sorts by smallest value first for the distance
+            # https://www.tutorialstonight.com/python-sort-by-multiple-keys#two-key-sorting-examples
+            image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))), key=lambda x: (x.stem.rsplit('_', 5)[-1], float(x.stem.rsplit('_', 5)[1])))
+
             # image_count = len(list(data_dir.glob('*.jpg')))
             for name in image_count:
                     # head, tail = ntpath.split(name)
@@ -520,7 +523,10 @@ def capture_setting():
 
                 data_dir = Path(f"{config.source}/{internal_folder}") # path to the images where it is located
                 # the following code interite over the extension that exist within a folder and place them into a single list
-                image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
+                # sorts the list based on the category they are in "still_image" then "video" afterwards sorts by smallest value first for the distance
+                # https://www.tutorialstonight.com/python-sort-by-multiple-keys#two-key-sorting-examples
+                image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))), key=lambda x: (x.stem.rsplit('_', 5)[-1], float(x.stem.rsplit('_', 5)[1])))
+
 
                 # image_count = len(list(data_dir.glob('*.jpg')))
                 for name in image_count:
@@ -653,7 +659,10 @@ def capture_setting():
                 filewriter.writerow(["Distance", "Correct Guess Character", "Correct Guess Character (%)", "Correct Guess Colour", "Correct Guess Colour (%)", "Detection Speed (ms)", "Character Recognition Speed (ms)", "Colour Recognition Speed (ms)", "Total Speed (ms)", f"Character Regnition Method ({config.character})", f"Colour Regnition Method ({config.colour})"])
 
             # the following code interite over the extension that exist within a folder and place them into a single list
-            image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))))
+            # sorts the list based on the category they are in "still_image" then "video" afterwards sorts by smallest value first for the distance
+            # https://www.tutorialstonight.com/python-sort-by-multiple-keys#two-key-sorting-examples
+            image_count = sorted(list(itertools.chain.from_iterable(data_dir.glob(pattern) for pattern in ('*.jpg', '*.png'))), key=lambda x: (x.stem.rsplit('_', 5)[-1], float(x.stem.rsplit('_', 5)[1])))
+
             # image_count = len(list(data_dir.glob('*.png')))
             for name in image_count:
                 # head, tail = ntpath.split(name)
